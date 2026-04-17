@@ -12,6 +12,7 @@ import {
   getStatusClasses,
   getStatusLabel,
 } from '../shared/contratoAppearance';
+import { groupContratosByModalidade } from '../shared/groupContratosByModalidade';
 import { Pagination } from '../shared/Pagination';
 
 type ContratosMobileListProps = {
@@ -46,6 +47,7 @@ export function ContratosMobileList({
 }: ContratosMobileListProps) {
   const inicio = totalResultados === 0 ? 0 : (paginaAtual - 1) * itensPorPagina + 1;
   const fim = Math.min(paginaAtual * itensPorPagina, totalResultados);
+  const groups = groupContratosByModalidade(contratos);
 
   return (
     <section className="xl:hidden">
@@ -77,82 +79,105 @@ export function ContratosMobileList({
           </label>
         </div>
 
-        <div className="grid gap-3">
-          {contratos.map((contrato) => (
-            <article
-              key={contrato.id}
-              role="button"
-              tabIndex={0}
-              onClick={() => onOpenDetail(contrato)}
-              onKeyDown={(event) => {
-                if (event.key === 'Enter' || event.key === ' ') {
-                  event.preventDefault();
-                  onOpenDetail(contrato);
-                }
-              }}
-              className={`cursor-pointer rounded-[28px] border border-slate-200/80 bg-white px-4 py-4 shadow-soft transition hover:border-iguape-200 hover:bg-iguape-50/40 ${getAccentBorderClasses(
-                contrato.criticidade,
-              )}`}
-            >
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <p className="text-[0.72rem] font-semibold uppercase tracking-[0.16em] text-iguape-700">
-                    {textoOuNaoInformado(contrato.modalidade)}
-                  </p>
-                  <h3 className="mt-2 text-base font-semibold leading-tight tracking-[-0.02em] text-slate-900">
-                    {textoOuNaoInformado(contrato.objeto)}
-                  </h3>
-                  <p className="mt-2 text-sm text-slate-500">
-                    {textoOuNaoInformado(contrato.empresaContratada)}
-                  </p>
+        <div className="grid gap-4">
+          {groups.map((group) => (
+            <section key={group.key} className="grid gap-3">
+              <div className="rounded-[24px] border border-slate-200/80 bg-slate-50/90 px-4 py-3">
+                <div className="flex items-center justify-between gap-4">
+                  <div className="min-w-0">
+                    <p className="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-slate-400">
+                      Modalidade
+                    </p>
+                    <h3 className="mt-1 truncate text-sm font-semibold text-slate-800">{group.label}</h3>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-slate-400">
+                      {formatNumeroInteiro(group.quantidade)} contrato{group.quantidade === 1 ? '' : 's'}
+                    </p>
+                    <p className="mt-1 text-sm font-semibold text-iguape-700">
+                      {group.possuiValorInformado ? formatMoedaBRL(group.valorTotal) : 'Não informado'}
+                    </p>
+                  </div>
                 </div>
+              </div>
 
-                <span
-                  className={`shrink-0 rounded-full px-3 py-2 text-xs font-semibold ${getStatusClasses(
-                    contrato,
+              {group.contratos.map((contrato) => (
+                <article
+                  key={contrato.id}
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => onOpenDetail(contrato)}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                      event.preventDefault();
+                      onOpenDetail(contrato);
+                    }
+                  }}
+                  className={`cursor-pointer rounded-[28px] border border-slate-200/80 bg-white px-4 py-4 shadow-soft transition hover:border-iguape-200 hover:bg-iguape-50/40 ${getAccentBorderClasses(
+                    contrato.criticidade,
                   )}`}
                 >
-                  {getStatusLabel(contrato)}
-                </span>
-              </div>
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="text-[0.72rem] font-semibold uppercase tracking-[0.16em] text-iguape-700">
+                        {textoOuNaoInformado(contrato.modalidade)}
+                      </p>
+                      <h3 className="mt-2 text-base font-semibold leading-tight tracking-[-0.02em] text-slate-900">
+                        {textoOuNaoInformado(contrato.objeto)}
+                      </h3>
+                      <p className="mt-2 text-sm text-slate-500">
+                        {textoOuNaoInformado(contrato.empresaContratada)}
+                      </p>
+                    </div>
 
-              <div className="mt-4 grid grid-cols-2 gap-3 rounded-3xl bg-slate-50/80 p-3">
-                <InfoItem label="Contrato" value={textoOuNaoInformado(contrato.contrato)} />
-                <InfoItem label="Processo" value={textoOuNaoInformado(contrato.processo)} align="right" />
-                <InfoItem label="Valor" value={formatMoedaBRL(contrato.valor)} />
-                <InfoItem
-                  label="Dias p/ vencimento"
-                  value={formatDiasParaVencimento(contrato.diasParaVencimento)}
-                  align="right"
-                />
-                <InfoItem label="Início" value={formatDataBR(contrato.dataInicio)} />
-                <InfoItem label="Vencimento" value={formatDataBR(contrato.dataVencimento)} align="right" />
-              </div>
+                    <span
+                      className={`shrink-0 rounded-full px-3 py-2 text-xs font-semibold ${getStatusClasses(
+                        contrato,
+                      )}`}
+                    >
+                      {getStatusLabel(contrato)}
+                    </span>
+                  </div>
 
-              <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
-                <div className="min-w-0">
-                  <p className="text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-slate-400">
-                    Gestão
-                  </p>
-                  <p className="mt-1 text-sm text-slate-600">
-                    Gestor: <span className="font-medium">{textoOuNaoInformado(contrato.gestor)}</span>
-                  </p>
-                  <p className="mt-1 text-sm text-slate-600">
-                    Fiscal: <span className="font-medium">{textoOuNaoInformado(contrato.fiscal)}</span>
-                  </p>
-                </div>
+                  <div className="mt-4 grid grid-cols-2 gap-3 rounded-3xl bg-slate-50/80 p-3">
+                    <InfoItem label="Contrato" value={textoOuNaoInformado(contrato.contrato)} />
+                    <InfoItem label="Processo" value={textoOuNaoInformado(contrato.processo)} align="right" />
+                    <InfoItem label="Valor" value={formatMoedaBRL(contrato.valor)} />
+                    <InfoItem
+                      label="Dias p/ vencimento"
+                      value={formatDiasParaVencimento(contrato.diasParaVencimento)}
+                      align="right"
+                    />
+                    <InfoItem label="Início" value={formatDataBR(contrato.dataInicio)} />
+                    <InfoItem label="Vencimento" value={formatDataBR(contrato.dataVencimento)} align="right" />
+                  </div>
 
-                <div className="text-right">
-                  <p className="text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-slate-400">
-                    Situação
-                  </p>
-                  <p className={`mt-1 text-sm font-semibold ${getCriticidadeClasses(contrato.criticidade)}`}>
-                    {contrato.dadosIncompletos ? 'Dados pendentes' : 'Cadastro consistente'}
-                  </p>
-                  <p className="mt-1 text-sm text-iguape-700">Abrir detalhe</p>
-                </div>
-              </div>
-            </article>
+                  <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-slate-400">
+                        Gestão
+                      </p>
+                      <p className="mt-1 text-sm text-slate-600">
+                        Gestor: <span className="font-medium">{textoOuNaoInformado(contrato.gestor)}</span>
+                      </p>
+                      <p className="mt-1 text-sm text-slate-600">
+                        Fiscal: <span className="font-medium">{textoOuNaoInformado(contrato.fiscal)}</span>
+                      </p>
+                    </div>
+
+                    <div className="text-right">
+                      <p className="text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-slate-400">
+                        Situação
+                      </p>
+                      <p className={`mt-1 text-sm font-semibold ${getCriticidadeClasses(contrato.criticidade)}`}>
+                        {contrato.dadosIncompletos ? 'Dados pendentes' : 'Cadastro consistente'}
+                      </p>
+                      <p className="mt-1 text-sm text-iguape-700">Abrir detalhe</p>
+                    </div>
+                  </div>
+                </article>
+              ))}
+            </section>
           ))}
         </div>
 

@@ -1,3 +1,4 @@
+import { Fragment } from 'react';
 import type { Contrato } from '../../types/contrato';
 import type { OrdenacaoCampo } from '../../hooks/useFiltros';
 import {
@@ -12,6 +13,7 @@ import {
   getStatusClasses,
   getStatusLabel,
 } from '../shared/contratoAppearance';
+import { groupContratosByModalidade } from '../shared/groupContratosByModalidade';
 import { Pagination } from '../shared/Pagination';
 
 type ContratosTableProps = {
@@ -90,6 +92,7 @@ export function ContratosTable({
 }: ContratosTableProps) {
   const inicio = totalResultados === 0 ? 0 : (paginaAtual - 1) * itensPorPagina + 1;
   const fim = Math.min(paginaAtual * itensPorPagina, totalResultados);
+  const groups = groupContratosByModalidade(contratos);
 
   return (
     <section className="hidden xl:block">
@@ -156,70 +159,94 @@ export function ContratosTable({
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200/80 text-[0.8rem] text-slate-700">
-              {contratos.map((contrato) => (
-                <tr
-                  key={contrato.id}
-                  tabIndex={0}
-                  onClick={() => onOpenDetail(contrato)}
-                  onKeyDown={(event) => {
-                    if (event.key === 'Enter' || event.key === ' ') {
-                      event.preventDefault();
-                      onOpenDetail(contrato);
-                    }
-                  }}
-                  className="cursor-pointer bg-white transition hover:bg-iguape-50/60 focus-visible:bg-iguape-50/70 focus-visible:outline-none"
-                >
-                  <td className="px-3 py-3 align-top" title={textoOuNaoInformado(contrato.modalidade)}>
-                    <span className="block truncate font-medium">{textoOuNaoInformado(contrato.modalidade)}</span>
-                  </td>
-                  <td className="px-3 py-3 align-top" title={textoOuNaoInformado(contrato.numeroModalidade)}>
-                    <span className="block truncate">{textoOuNaoInformado(contrato.numeroModalidade)}</span>
-                  </td>
-                  <td className="px-3 py-3 align-top" title={textoOuNaoInformado(contrato.objeto)}>
-                    <span className="block truncate font-semibold text-slate-800">
-                      {textoOuNaoInformado(contrato.objeto)}
-                    </span>
-                  </td>
-                  <td className="px-3 py-3 align-top" title={textoOuNaoInformado(contrato.processo)}>
-                    <span className="block truncate">{textoOuNaoInformado(contrato.processo)}</span>
-                  </td>
-                  <td className="px-3 py-3 align-top" title={textoOuNaoInformado(contrato.contrato)}>
-                    <span className="block truncate">{textoOuNaoInformado(contrato.contrato)}</span>
-                  </td>
-                  <td
-                    className="px-3 py-3 align-top"
-                    title={textoOuNaoInformado(contrato.empresaContratada)}
-                  >
-                    <span className="block truncate">{textoOuNaoInformado(contrato.empresaContratada)}</span>
-                  </td>
-                  <td className="px-3 py-3 text-right align-top font-semibold text-slate-800">
-                    {formatMoedaBRL(contrato.valor)}
-                  </td>
-                  <td className="px-3 py-3 align-top">{formatDataBR(contrato.dataInicio)}</td>
-                  <td className="px-3 py-3 align-top">{formatDataBR(contrato.dataVencimento)}</td>
-                  <td
-                    className={`px-3 py-3 text-right align-top font-semibold ${getCriticidadeClasses(
-                      contrato.criticidade,
-                    )}`}
-                  >
-                    {formatDiasParaVencimento(contrato.diasParaVencimento)}
-                  </td>
-                  <td className="px-3 py-3 align-top">
-                    <span
-                      className={`inline-flex min-h-8 items-center rounded-full px-3 text-xs font-semibold ${getStatusClasses(
-                        contrato,
-                      )}`}
+              {groups.map((group) => (
+                <Fragment key={group.key}>
+                  <tr className="border-y border-slate-200/80 bg-slate-50/90">
+                    <td colSpan={COLUMNS.length} className="px-4 py-3">
+                      <div className="flex items-center justify-between gap-4">
+                        <div className="min-w-0">
+                          <p className="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-slate-400">
+                            Modalidade
+                          </p>
+                          <p className="mt-1 truncate text-sm font-semibold text-slate-800">{group.label}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-slate-400">
+                            {formatNumeroInteiro(group.quantidade)} contrato{group.quantidade === 1 ? '' : 's'}
+                          </p>
+                          <p className="mt-1 text-sm font-semibold text-iguape-700">
+                            {group.possuiValorInformado ? formatMoedaBRL(group.valorTotal) : 'Não informado'}
+                          </p>
+                        </div>
+                      </div>
+                    </td>
+                  </tr>
+                  {group.contratos.map((contrato) => (
+                    <tr
+                      key={contrato.id}
+                      tabIndex={0}
+                      onClick={() => onOpenDetail(contrato)}
+                      onKeyDown={(event) => {
+                        if (event.key === 'Enter' || event.key === ' ') {
+                          event.preventDefault();
+                          onOpenDetail(contrato);
+                        }
+                      }}
+                      className="cursor-pointer bg-white transition hover:bg-iguape-50/60 focus-visible:bg-iguape-50/70 focus-visible:outline-none"
                     >
-                      {getStatusLabel(contrato)}
-                    </span>
-                  </td>
-                  <td className="px-3 py-3 align-top" title={textoOuNaoInformado(contrato.gestor)}>
-                    <span className="block truncate">{textoOuNaoInformado(contrato.gestor)}</span>
-                  </td>
-                  <td className="px-3 py-3 align-top" title={textoOuNaoInformado(contrato.fiscal)}>
-                    <span className="block truncate">{textoOuNaoInformado(contrato.fiscal)}</span>
-                  </td>
-                </tr>
+                      <td className="px-3 py-3 align-top" title={textoOuNaoInformado(contrato.modalidade)}>
+                        <span className="block truncate font-medium">{textoOuNaoInformado(contrato.modalidade)}</span>
+                      </td>
+                      <td className="px-3 py-3 align-top" title={textoOuNaoInformado(contrato.numeroModalidade)}>
+                        <span className="block truncate">{textoOuNaoInformado(contrato.numeroModalidade)}</span>
+                      </td>
+                      <td className="px-3 py-3 align-top" title={textoOuNaoInformado(contrato.objeto)}>
+                        <span className="block truncate font-semibold text-slate-800">
+                          {textoOuNaoInformado(contrato.objeto)}
+                        </span>
+                      </td>
+                      <td className="px-3 py-3 align-top" title={textoOuNaoInformado(contrato.processo)}>
+                        <span className="block truncate">{textoOuNaoInformado(contrato.processo)}</span>
+                      </td>
+                      <td className="px-3 py-3 align-top" title={textoOuNaoInformado(contrato.contrato)}>
+                        <span className="block truncate">{textoOuNaoInformado(contrato.contrato)}</span>
+                      </td>
+                      <td
+                        className="px-3 py-3 align-top"
+                        title={textoOuNaoInformado(contrato.empresaContratada)}
+                      >
+                        <span className="block truncate">{textoOuNaoInformado(contrato.empresaContratada)}</span>
+                      </td>
+                      <td className="px-3 py-3 text-right align-top font-semibold text-slate-800">
+                        {formatMoedaBRL(contrato.valor)}
+                      </td>
+                      <td className="px-3 py-3 align-top">{formatDataBR(contrato.dataInicio)}</td>
+                      <td className="px-3 py-3 align-top">{formatDataBR(contrato.dataVencimento)}</td>
+                      <td
+                        className={`px-3 py-3 text-right align-top font-semibold ${getCriticidadeClasses(
+                          contrato.criticidade,
+                        )}`}
+                      >
+                        {formatDiasParaVencimento(contrato.diasParaVencimento)}
+                      </td>
+                      <td className="px-3 py-3 align-top">
+                        <span
+                          className={`inline-flex min-h-8 items-center rounded-full px-3 text-xs font-semibold ${getStatusClasses(
+                            contrato,
+                          )}`}
+                        >
+                          {getStatusLabel(contrato)}
+                        </span>
+                      </td>
+                      <td className="px-3 py-3 align-top" title={textoOuNaoInformado(contrato.gestor)}>
+                        <span className="block truncate">{textoOuNaoInformado(contrato.gestor)}</span>
+                      </td>
+                      <td className="px-3 py-3 align-top" title={textoOuNaoInformado(contrato.fiscal)}>
+                        <span className="block truncate">{textoOuNaoInformado(contrato.fiscal)}</span>
+                      </td>
+                    </tr>
+                  ))}
+                </Fragment>
               ))}
             </tbody>
           </table>

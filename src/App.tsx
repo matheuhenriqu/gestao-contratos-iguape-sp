@@ -78,7 +78,7 @@ function App() {
                   Contratos administrativos
                 </h2>
                 <p className="mt-2 max-w-3xl text-sm text-slate-500">
-                  Ambiente de consulta, acompanhamento e priorização dos contratos com foco em vencimento, integridade cadastral e leitura rápida.
+                  Ambiente de consulta, acompanhamento e priorização dos contratos com foco em vencimento, integridade cadastral e leitura rápida, agora organizado por modalidade.
                 </p>
               </div>
 
@@ -87,7 +87,7 @@ function App() {
                   {formatNumeroInteiro(totalResultados)} resultado{totalResultados === 1 ? '' : 's'}
                 </span>
                 <span className="inline-flex min-h-10 items-center rounded-full bg-slate-100 px-4 text-sm font-semibold text-slate-600">
-                  Ordenação por{' '}
+                  Ordem interna por{' '}
                   <span className="ml-1 capitalize">
                     {ordenacao.campo === 'numeroModalidade'
                       ? 'nº modalidade'

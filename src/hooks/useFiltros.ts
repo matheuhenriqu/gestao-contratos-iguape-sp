@@ -178,34 +178,51 @@ function compareStatus(a: StatusNormalizado, b: StatusNormalizado): number {
   return (order[String(a)] ?? fallback) - (order[String(b)] ?? fallback);
 }
 
+function compareByCampo(a: Contrato, b: Contrato, campo: OrdenacaoCampo): number {
+  switch (campo) {
+    case 'valor':
+    case 'diasParaVencimento':
+      return compareNullableNumber(a[campo], b[campo]);
+    case 'dataInicio':
+    case 'dataVencimento':
+      return compareNullableDate(a[campo], b[campo]);
+    case 'statusNormalizado':
+      return compareStatus(a.statusNormalizado, b.statusNormalizado);
+    default:
+      return compareNullableText(a[campo], b[campo]);
+  }
+}
+
 function ordenarContratos(contratos: Contrato[], ordenacao: OrdenacaoState): Contrato[] {
   const ordenados = [...contratos];
 
   ordenados.sort((a, b) => {
-    let resultado = 0;
+    const comparacaoModalidade = compareNullableText(a.modalidade, b.modalidade);
 
-    switch (ordenacao.campo) {
-      case 'valor':
-      case 'diasParaVencimento':
-        resultado = compareNullableNumber(a[ordenacao.campo], b[ordenacao.campo]);
-        break;
-      case 'dataInicio':
-      case 'dataVencimento':
-        resultado = compareNullableDate(a[ordenacao.campo], b[ordenacao.campo]);
-        break;
-      case 'statusNormalizado':
-        resultado = compareStatus(a.statusNormalizado, b.statusNormalizado);
-        break;
-      default:
-        resultado = compareNullableText(a[ordenacao.campo], b[ordenacao.campo]);
-        break;
+    if (ordenacao.campo !== 'modalidade' && comparacaoModalidade !== 0) {
+      return comparacaoModalidade;
     }
+
+    let resultado =
+      ordenacao.campo === 'modalidade'
+        ? comparacaoModalidade
+        : compareByCampo(a, b, ordenacao.campo);
 
     if (resultado === 0) {
       resultado = compareNullableText(a.objeto, b.objeto);
     }
 
-    return ordenacao.direcao === 'asc' ? resultado : resultado * -1;
+    if (resultado === 0) {
+      resultado = compareNullableText(a.contrato, b.contrato);
+    }
+
+    return ordenacao.campo === 'modalidade'
+      ? ordenacao.direcao === 'asc'
+        ? resultado
+        : resultado * -1
+      : ordenacao.direcao === 'asc'
+        ? resultado
+        : resultado * -1;
   });
 
   return ordenados;
