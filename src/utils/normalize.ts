@@ -1,0 +1,455 @@
+import type { Contrato, ContratoRaw } from '../types/contrato';
+import {
+  calcularCriticidade,
+  calcularDiasParaVencimento,
+  calcularFaixa,
+  calcularStatusNormalizado,
+} from './vencimento';
+
+export type CanonicalColumnKey = Exclude<keyof ContratoRaw, '_rowNumber'>;
+
+type HeaderDefinition = {
+  canonicalKey: CanonicalColumnKey;
+  expectedHeader: string;
+  aliases: string[];
+};
+
+type ParsedDate = {
+  iso: string | null;
+  originalText: string | null;
+  wasInvalid: boolean;
+};
+
+export type HeaderMapResult = {
+  headerMap: Record<string, CanonicalColumnKey>;
+  missingExpectedHeaders: string[];
+  unexpectedHeaders: string[];
+  duplicateMappings: string[];
+};
+
+export const HEADER_DEFINITIONS: readonly HeaderDefinition[] = [
+  { canonicalKey: 'id', expectedHeader: 'ID', aliases: ['id'] },
+  { canonicalKey: 'modalidade', expectedHeader: 'Modalidade', aliases: ['modalidade'] },
+  {
+    canonicalKey: 'numeroModalidade',
+    expectedHeader: 'Nº Modalidade',
+    aliases: ['n modalidade', 'no modalidade', 'numero modalidade'],
+  },
+  { canonicalKey: 'objeto', expectedHeader: 'Objeto', aliases: ['objeto'] },
+  { canonicalKey: 'processo', expectedHeader: 'Processo', aliases: ['processo'] },
+  { canonicalKey: 'contrato', expectedHeader: 'Contrato', aliases: ['contrato'] },
+  {
+    canonicalKey: 'empresaContratada',
+    expectedHeader: 'Empresa Contratada',
+    aliases: ['empresa contratada', 'contratada'],
+  },
+  {
+    canonicalKey: 'valor',
+    expectedHeader: 'Valor (R$)',
+    aliases: ['valor r', 'valor rs', 'valor'],
+  },
+  {
+    canonicalKey: 'valorDescricao',
+    expectedHeader: 'Valor (Descrição)',
+    aliases: ['valor descricao', 'descricao valor'],
+  },
+  {
+    canonicalKey: 'dataInicio',
+    expectedHeader: 'Data Início',
+    aliases: ['data inicio', 'inicio'],
+  },
+  {
+    canonicalKey: 'dataVencimento',
+    expectedHeader: 'Data Vencimento',
+    aliases: ['data vencimento', 'vencimento'],
+  },
+  {
+    canonicalKey: 'diasParaVencimento',
+    expectedHeader: 'Dias p/ Vencimento',
+    aliases: ['dias p vencimento', 'dias para vencimento'],
+  },
+  { canonicalKey: 'status', expectedHeader: 'Status', aliases: ['status'] },
+  { canonicalKey: 'gestor', expectedHeader: 'Gestor', aliases: ['gestor'] },
+  { canonicalKey: 'fiscal', expectedHeader: 'Fiscal', aliases: ['fiscal'] },
+  {
+    canonicalKey: 'observacoes',
+    expectedHeader: 'Observações',
+    aliases: ['observacoes', 'observacao', 'observacoes gerais'],
+  },
+] as const;
+
+export const EXPECTED_HEADERS = HEADER_DEFINITIONS.map((definition) => definition.expectedHeader);
+
+export const ESSENTIAL_FIELDS = [
+  'objeto',
+  'contrato',
+  'empresaContratada',
+  'valor',
+  'dataInicio',
+  'dataVencimento',
+] as const satisfies readonly CanonicalColumnKey[];
+
+function stripAccents(value: string): string {
+  return value.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+}
+
+function normalizeWhitespace(value: string): string {
+  return value.replace(/\s+/g, ' ').trim();
+}
+
+export function normalizeHeaderValue(header: string): string {
+  return normalizeWhitespace(
+    stripAccents(header)
+      .toLowerCase()
+      .replace(/[º°]/g, 'o')
+      .replace(/[№]/g, 'n')
+      .replace(/&/g, ' e ')
+      .replace(/[/()-]/g, ' ')
+      .replace(/[^\p{L}\p{N}\s]/gu, ' '),
+  );
+}
+
+export function buildHeaderMap(headers: string[]): HeaderMapResult {
+  const headerMap: Record<string, CanonicalColumnKey> = {};
+  const duplicateMappings: string[] = [];
+  const unexpectedHeaders: string[] = [];
+  const matchedCanonicals = new Set<CanonicalColumnKey>();
+
+  for (const header of headers) {
+    const normalizedHeader = normalizeHeaderValue(header);
+    const definition = HEADER_DEFINITIONS.find((candidate) => {
+      const aliases = new Set([
+        normalizeHeaderValue(candidate.expectedHeader),
+        ...candidate.aliases.map(normalizeHeaderValue),
+      ]);
+
+      return aliases.has(normalizedHeader);
+    });
+
+    if (!definition) {
+      unexpectedHeaders.push(header);
+      continue;
+    }
+
+    if (matchedCanonicals.has(definition.canonicalKey)) {
+      duplicateMappings.push(`${header} -> ${definition.canonicalKey}`);
+      continue;
+    }
+
+    matchedCanonicals.add(definition.canonicalKey);
+    headerMap[header] = definition.canonicalKey;
+  }
+
+  const missingExpectedHeaders = HEADER_DEFINITIONS.filter(
+    (definition) => !matchedCanonicals.has(definition.canonicalKey),
+  ).map((definition) => definition.expectedHeader);
+
+  return {
+    headerMap,
+    missingExpectedHeaders,
+    unexpectedHeaders,
+    duplicateMappings,
+  };
+}
+
+function coerceString(value: unknown): string | null {
+  if (value === null || value === undefined) {
+    return null;
+  }
+
+  if (typeof value === 'string') {
+    const trimmed = normalizeWhitespace(value);
+    return trimmed.length > 0 ? trimmed : null;
+  }
+
+  if (typeof value === 'number' || typeof value === 'boolean' || value instanceof Date) {
+    return String(value);
+  }
+
+  return null;
+}
+
+function coerceId(value: unknown, rowNumber: number): string {
+  const asString = coerceString(value);
+  return asString ?? `linha-${rowNumber}`;
+}
+
+function formatDateParts(year: number, month: number, day: number): string {
+  return `${year.toString().padStart(4, '0')}-${month.toString().padStart(2, '0')}-${day
+    .toString()
+    .padStart(2, '0')}`;
+}
+
+function isValidDateParts(year: number, month: number, day: number): boolean {
+  const candidate = new Date(Date.UTC(year, month - 1, day));
+  return (
+    candidate.getUTCFullYear() === year &&
+    candidate.getUTCMonth() === month - 1 &&
+    candidate.getUTCDate() === day
+  );
+}
+
+function parseExcelSerialDate(value: number): string | null {
+  if (!Number.isFinite(value)) {
+    return null;
+  }
+
+  const serial = Math.trunc(value);
+
+  if (serial <= 0) {
+    return null;
+  }
+
+  const utcTimestamp = Date.UTC(1899, 11, 30) + serial * 86_400_000;
+  const date = new Date(utcTimestamp);
+
+  return formatDateParts(date.getUTCFullYear(), date.getUTCMonth() + 1, date.getUTCDate());
+}
+
+export function parseDateInput(value: unknown): ParsedDate {
+  if (value === null || value === undefined || value === '') {
+    return { iso: null, originalText: null, wasInvalid: false };
+  }
+
+  if (value instanceof Date && !Number.isNaN(value.getTime())) {
+    return {
+      iso: formatDateParts(value.getFullYear(), value.getMonth() + 1, value.getDate()),
+      originalText: null,
+      wasInvalid: false,
+    };
+  }
+
+  if (typeof value === 'number') {
+    const iso = parseExcelSerialDate(value);
+    return {
+      iso,
+      originalText: iso ? null : String(value),
+      wasInvalid: iso === null,
+    };
+  }
+
+  const text = coerceString(value);
+
+  if (!text) {
+    return { iso: null, originalText: null, wasInvalid: false };
+  }
+
+  const isoMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(text);
+  if (isoMatch) {
+    const year = Number(isoMatch[1]);
+    const month = Number(isoMatch[2]);
+    const day = Number(isoMatch[3]);
+
+    if (isValidDateParts(year, month, day)) {
+      return { iso: formatDateParts(year, month, day), originalText: null, wasInvalid: false };
+    }
+  }
+
+  const brMatch = /^(\d{1,2})[/-](\d{1,2})[/-](\d{2,4})$/.exec(text);
+  if (brMatch) {
+    const day = Number(brMatch[1]);
+    const month = Number(brMatch[2]);
+    const yearToken = brMatch[3] ?? '';
+    const year = Number(yearToken.length === 2 ? `20${yearToken}` : yearToken);
+
+    if (isValidDateParts(year, month, day)) {
+      return { iso: formatDateParts(year, month, day), originalText: null, wasInvalid: false };
+    }
+  }
+
+  const usLikeMatch = /^(\d{4})[/.](\d{1,2})[/.](\d{1,2})$/.exec(text);
+  if (usLikeMatch) {
+    const year = Number(usLikeMatch[1]);
+    const month = Number(usLikeMatch[2]);
+    const day = Number(usLikeMatch[3]);
+
+    if (isValidDateParts(year, month, day)) {
+      return { iso: formatDateParts(year, month, day), originalText: null, wasInvalid: false };
+    }
+  }
+
+  if (/^\d+(?:[.,]\d+)?$/.test(text)) {
+    const numeric = Number(text.replace(',', '.'));
+    const iso = parseExcelSerialDate(numeric);
+
+    if (iso) {
+      return { iso, originalText: null, wasInvalid: false };
+    }
+  }
+
+  return { iso: null, originalText: text, wasInvalid: true };
+}
+
+export function parseCurrencyToNumber(value: unknown): number | null {
+  if (value === null || value === undefined || value === '') {
+    return null;
+  }
+
+  if (typeof value === 'number') {
+    return Number.isFinite(value) ? value : null;
+  }
+
+  const text = coerceString(value);
+  if (!text) {
+    return null;
+  }
+
+  const sanitized = text.replace(/\s+/g, '').replace(/[R$r$]/g, '').replace(/[^\d,.-]/g, '');
+  if (!sanitized) {
+    return null;
+  }
+
+  const negative = sanitized.startsWith('-');
+  const unsigned = sanitized.replace(/-/g, '');
+  const lastComma = unsigned.lastIndexOf(',');
+  const lastDot = unsigned.lastIndexOf('.');
+
+  let normalizedNumber = unsigned;
+
+  if (lastComma >= 0 && lastDot >= 0) {
+    const decimalIndex = Math.max(lastComma, lastDot);
+    const integerPart = unsigned.slice(0, decimalIndex).replace(/[.,]/g, '');
+    const decimalPart = unsigned.slice(decimalIndex + 1).replace(/[.,]/g, '');
+    normalizedNumber = decimalPart ? `${integerPart}.${decimalPart}` : integerPart;
+  } else if (lastComma >= 0) {
+    const decimalDigits = unsigned.length - lastComma - 1;
+    normalizedNumber =
+      decimalDigits > 0 && decimalDigits <= 2
+        ? `${unsigned.slice(0, lastComma).replace(/,/g, '')}.${unsigned.slice(lastComma + 1)}`
+        : unsigned.replace(/,/g, '');
+  } else if (lastDot >= 0) {
+    const decimalDigits = unsigned.length - lastDot - 1;
+    normalizedNumber =
+      decimalDigits > 0 && decimalDigits <= 2
+        ? `${unsigned.slice(0, lastDot).replace(/\./g, '')}.${unsigned.slice(lastDot + 1)}`
+        : unsigned.replace(/\./g, '');
+  }
+
+  const parsed = Number(negative ? `-${normalizedNumber}` : normalizedNumber);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+export function mapRowToContratoRaw(
+  headers: string[],
+  row: unknown[],
+  headerMap: Record<string, CanonicalColumnKey>,
+  rowNumber: number,
+): ContratoRaw {
+  const raw: ContratoRaw = {
+    id: null,
+    modalidade: null,
+    numeroModalidade: null,
+    objeto: null,
+    processo: null,
+    contrato: null,
+    empresaContratada: null,
+    valor: null,
+    valorDescricao: null,
+    dataInicio: null,
+    dataVencimento: null,
+    diasParaVencimento: null,
+    status: null,
+    gestor: null,
+    fiscal: null,
+    observacoes: null,
+    _rowNumber: rowNumber,
+  };
+
+  headers.forEach((header, index) => {
+    const canonicalKey = headerMap[header];
+
+    if (!canonicalKey) {
+      return;
+    }
+
+    raw[canonicalKey] = row[index] ?? null;
+  });
+
+  return raw;
+}
+
+export function normalizeContrato(raw: ContratoRaw, referencia: Date = new Date()): Contrato {
+  const dataInicio = parseDateInput(raw.dataInicio);
+  const dataVencimento = parseDateInput(raw.dataVencimento);
+  const valor = parseCurrencyToNumber(raw.valor);
+  const diasParaVencimento = calcularDiasParaVencimento(dataVencimento.iso, referencia);
+
+  const contrato: Contrato = {
+    id: coerceId(raw.id, raw._rowNumber),
+    modalidade: coerceString(raw.modalidade),
+    numeroModalidade: coerceString(raw.numeroModalidade),
+    objeto: coerceString(raw.objeto),
+    processo: coerceString(raw.processo),
+    contrato: coerceString(raw.contrato),
+    empresaContratada: coerceString(raw.empresaContratada),
+    valor,
+    valorDescricao: coerceString(raw.valorDescricao),
+    dataInicio: dataInicio.iso,
+    dataInicioTextoOriginal: dataInicio.originalText,
+    dataVencimento: dataVencimento.iso,
+    dataVencimentoTextoOriginal: dataVencimento.originalText,
+    diasParaVencimento,
+    statusOriginal: coerceString(raw.status),
+    statusNormalizado: calcularStatusNormalizado(diasParaVencimento),
+    gestor: coerceString(raw.gestor),
+    fiscal: coerceString(raw.fiscal),
+    observacoes: coerceString(raw.observacoes),
+    dadosIncompletos: false,
+    faixaVencimento: calcularFaixa(diasParaVencimento),
+    criticidade: calcularCriticidade(diasParaVencimento),
+  };
+
+  contrato.dadosIncompletos =
+    !contrato.objeto ||
+    !contrato.contrato ||
+    !contrato.empresaContratada ||
+    contrato.valor === null ||
+    contrato.dataInicio === null ||
+    contrato.dataVencimento === null;
+
+  return contrato;
+}
+
+export function collectContratoIssues(raw: ContratoRaw, contrato: Contrato): string[] {
+  const issues: string[] = [];
+  const dataInicio = parseDateInput(raw.dataInicio);
+  const dataVencimento = parseDateInput(raw.dataVencimento);
+
+  if (dataInicio.wasInvalid) {
+    issues.push(`linha ${raw._rowNumber}: Data Início inválida (${String(raw.dataInicio)})`);
+  }
+
+  if (dataVencimento.wasInvalid) {
+    issues.push(`linha ${raw._rowNumber}: Data Vencimento inválida (${String(raw.dataVencimento)})`);
+  }
+
+  if (raw.valor !== null && raw.valor !== undefined && raw.valor !== '' && contrato.valor === null) {
+    issues.push(`linha ${raw._rowNumber}: Valor não parseável (${String(raw.valor)})`);
+  }
+
+  const diasOriginais =
+    typeof raw.diasParaVencimento === 'number'
+      ? raw.diasParaVencimento
+      : typeof raw.diasParaVencimento === 'string'
+        ? raw.diasParaVencimento.trim().length > 0
+          ? Number(raw.diasParaVencimento.replace(',', '.'))
+          : null
+        : null;
+
+  if (
+    typeof diasOriginais === 'number' &&
+    Number.isFinite(diasOriginais) &&
+    contrato.diasParaVencimento !== null &&
+    diasOriginais !== contrato.diasParaVencimento
+  ) {
+    issues.push(
+      `linha ${raw._rowNumber}: Dias p/ Vencimento divergente (planilha=${diasOriginais}, runtime=${contrato.diasParaVencimento})`,
+    );
+  }
+
+  if (contrato.dadosIncompletos) {
+    issues.push(`linha ${raw._rowNumber}: Campos essenciais ausentes`);
+  }
+
+  return issues;
+}
