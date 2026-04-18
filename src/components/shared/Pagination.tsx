@@ -51,8 +51,10 @@ export function Pagination({
         <ChevronLeftIcon className="h-4 w-4" />
       </button>
 
-      <span className="min-w-[88px] text-center text-sm font-medium text-text-muted">
-        {currentPage}/{totalPages}
+      <span className="tnum inline-flex min-w-[88px] items-center justify-center gap-1 rounded-md border border-border bg-surface px-3 py-1.5 text-sm font-medium text-text">
+        <span className="text-primary-700">{currentPage}</span>
+        <span className="text-text-subtle">/</span>
+        <span className="text-text-muted">{totalPages}</span>
       </span>
 
       <button

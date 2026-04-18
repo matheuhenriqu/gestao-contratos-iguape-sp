@@ -9,6 +9,7 @@ import {
 } from '../../utils/format';
 import {
   getCriticidadeTextClass,
+  getFaixaTone,
   getStatusClasses,
   getStatusLabel,
 } from '../shared/contratoAppearance';
@@ -102,14 +103,19 @@ export function ContratosMobileList({
       <div className="grid gap-3">
         {groups.map((group) => (
           <section key={group.key} className="grid gap-2">
-            <div className="rounded-lg border border-border-divider bg-surface-2 px-4 py-3">
-              <p className="section-kicker">Modalidade</p>
-              <div className="mt-1 flex items-center justify-between gap-3">
-                <h3 className="truncate text-base font-semibold text-text">{group.label}</h3>
-                <span className="tnum text-sm text-text-muted">
-                  {formatNumeroInteiro(group.quantidade)}
-                </span>
+            <div className="flex items-center justify-between gap-3 rounded-lg border border-primary-200 bg-primary-50 px-4 py-2.5">
+              <div className="flex items-center gap-2.5">
+                <span aria-hidden="true" className="h-5 w-1 rounded-pill bg-primary-600" />
+                <div>
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-primary-800/80">
+                    Modalidade
+                  </p>
+                  <h3 className="truncate text-sm font-semibold text-primary-900">{group.label}</h3>
+                </div>
               </div>
+              <span className="tnum inline-flex items-center rounded-pill bg-surface px-2 py-0.5 text-xs font-semibold text-primary-800 ring-1 ring-primary-200">
+                {formatNumeroInteiro(group.quantidade)}
+              </span>
             </div>
 
             {group.contratos.map((contrato) => (
@@ -124,16 +130,21 @@ export function ContratosMobileList({
                     onOpenDetail(contrato);
                   }
                 }}
-                className="grid gap-2 rounded-lg border border-border bg-surface px-3.5 py-3.5 shadow-soft transition hover:border-primary-200 hover:shadow-raised"
+                className="relative grid gap-2 overflow-hidden rounded-xl border border-border bg-surface px-3.5 py-3.5 pl-4 shadow-soft transition-all hover:-translate-y-0.5 hover:border-primary-200 hover:shadow-raised"
               >
+                <span
+                  aria-hidden="true"
+                  className={`absolute left-0 top-0 h-full w-1 ${getFaixaTone(contrato.faixaVencimento)}`}
+                />
+
                 <div className="flex items-center justify-between gap-3">
                   <span className={`status-pill ${getStatusClasses(contrato)}`}>{getStatusLabel(contrato)}</span>
-                  <span className={`text-sm font-medium ${getCriticidadeTextClass(contrato.criticidade)}`}>
+                  <span className={`text-sm font-semibold ${getCriticidadeTextClass(contrato.criticidade)}`}>
                     {formatPrazoCompacto(contrato.diasParaVencimento)}
                   </span>
                 </div>
 
-                <h3 className="line-clamp-2 text-md font-medium text-text">
+                <h3 className="line-clamp-2 text-md font-semibold leading-snug text-text">
                   {textoOuNaoInformado(contrato.objeto)}
                 </h3>
 
@@ -141,12 +152,12 @@ export function ContratosMobileList({
                   {textoOuNaoInformado(contrato.empresaContratada)}
                 </p>
 
-                <div className="flex items-end justify-between gap-3">
+                <div className="flex items-end justify-between gap-3 border-t border-border-divider pt-2">
                   <div className="min-w-0">
-                    <p className="line-clamp-1 text-sm text-text-muted">
-                      Contrato · Nº {textoOuNaoInformado(contrato.contrato)}
+                    <p className="line-clamp-1 text-xs text-text-subtle">
+                      Nº {textoOuNaoInformado(contrato.contrato)}
                     </p>
-                    <p className="line-clamp-1 text-sm text-text-muted">
+                    <p className="line-clamp-1 text-xs text-text-subtle">
                       Venc. {formatDataOuTraco(contrato.dataVencimento)}
                     </p>
                   </div>

@@ -9,14 +9,14 @@ type ChartShellProps = {
 export function ChartShell({ title, subtitle, children }: ChartShellProps) {
   return (
     <article
-      className="surface-card grid gap-4 p-4 md:p-5"
+      className="surface-card group grid gap-4 p-5 transition-shadow hover:shadow-raised md:p-6"
       style={{ contentVisibility: 'auto', containIntrinsicSize: '320px' }}
     >
-      <div className="grid gap-1">
+      <header className="grid gap-1.5 border-b border-border-divider pb-4">
         <span className="section-kicker">Painel analítico</span>
-        <h3 className="text-md font-semibold text-text">{title}</h3>
+        <h3 className="text-lg font-semibold tracking-tight text-text">{title}</h3>
         <p className="text-sm text-text-muted">{subtitle}</p>
-      </div>
+      </header>
 
       <div className="h-[220px] min-w-0 md:h-[260px]">{children}</div>
     </article>

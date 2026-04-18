@@ -110,11 +110,13 @@ export function ContratosTable({
 
   return (
     <section className="hidden md:block">
-      <div className="overflow-hidden rounded-lg border border-border bg-surface shadow-soft">
-        <div className="flex items-center justify-between gap-3 border-b border-border-divider px-4 py-4 lg:px-5">
+      <div className="overflow-hidden rounded-xl border border-border bg-surface shadow-soft">
+        <div className="flex items-center justify-between gap-3 border-b border-border-divider bg-surface-2/40 px-5 py-4">
           <div className="grid gap-1">
             <p className="section-kicker">Consulta principal</p>
-            <h2 className="text-xl font-semibold text-text">Contratos separados por modalidade</h2>
+            <h2 className="text-xl font-semibold tracking-tight text-text">
+              Contratos separados por modalidade
+            </h2>
           </div>
 
           <button type="button" onClick={onToggleCompactMode} className="button-secondary hidden lg:inline-flex">
@@ -152,13 +154,18 @@ export function ContratosTable({
               {groups.map((group) => (
                 <Fragment key={group.key}>
                   <tr>
-                    <td colSpan={COLUMNS.length} className="border-b border-border-divider bg-surface px-4 py-3">
+                    <td colSpan={COLUMNS.length} className="border-b border-border-divider bg-primary-50/60 px-4 py-3">
                       <div className="flex items-center justify-between gap-3">
-                        <div className="grid gap-0.5">
-                          <span className="section-kicker">Modalidade</span>
-                          <span className="text-base font-semibold text-text">{group.label}</span>
+                        <div className="flex items-center gap-3">
+                          <span aria-hidden="true" className="h-5 w-1 rounded-pill bg-primary-600" />
+                          <div className="grid gap-0.5">
+                            <span className="text-[11px] font-semibold uppercase tracking-[0.1em] text-text-subtle">
+                              Modalidade
+                            </span>
+                            <span className="text-base font-semibold text-text">{group.label}</span>
+                          </div>
                         </div>
-                        <span className="tnum text-sm text-text-muted">
+                        <span className="tnum inline-flex items-center rounded-pill border border-primary-200 bg-surface px-2.5 py-0.5 text-xs font-medium text-primary-800">
                           {formatNumeroInteiro(group.quantidade)} contrato{group.quantidade === 1 ? '' : 's'}
                         </span>
                       </div>

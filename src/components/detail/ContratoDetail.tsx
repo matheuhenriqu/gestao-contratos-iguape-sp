@@ -203,11 +203,17 @@ export function ContratoDetail({ contrato, onClose }: ContratoDetailProps) {
           <span className="h-1 w-9 rounded-pill bg-border-strong" />
         </div>
 
-        <header className="sticky top-0 z-10 grid gap-3 border-b border-border bg-surface px-4 pb-4 md:px-6 md:py-5">
+        <header
+          className="sticky top-0 z-10 grid gap-4 border-b border-border px-4 pb-5 pt-4 md:px-6 md:py-6"
+          style={{
+            background:
+              'linear-gradient(180deg, var(--color-primary-50) 0%, var(--color-surface) 100%)',
+          }}
+        >
           <div className="flex items-start justify-between gap-3">
             <div className="grid gap-1">
               <span className="section-kicker">Contrato</span>
-              <h2 id="contrato-detail-title" className="text-xl font-semibold text-text">
+              <h2 id="contrato-detail-title" className="text-2xl font-semibold tracking-tight text-text">
                 {textoOuNaoInformado(currentContrato.contrato)}
               </h2>
               <p className="text-sm text-text-muted">
@@ -253,9 +259,21 @@ export function ContratoDetail({ contrato, onClose }: ContratoDetailProps) {
             </Section>
 
             <Section title="Financeiro">
-              <div className="grid gap-2 rounded-lg border border-border bg-surface px-4 py-4 shadow-soft">
+              <div
+                className="relative grid gap-2 overflow-hidden rounded-xl border border-primary-200 px-5 py-5 shadow-soft"
+                style={{
+                  background:
+                    'linear-gradient(135deg, var(--color-primary-50) 0%, var(--color-surface) 100%)',
+                }}
+              >
+                <span
+                  aria-hidden="true"
+                  className="absolute left-0 top-0 h-full w-1 bg-primary-600"
+                />
                 <span className="field-label">Valor total</span>
-                <span className="tnum text-2xl font-semibold text-text">{formatMoedaBRL(currentContrato.valor)}</span>
+                <span className="tnum text-3xl font-semibold tracking-tight text-primary-900">
+                  {formatMoedaBRL(currentContrato.valor)}
+                </span>
                 {currentContrato.valorDescricao ? (
                   <span className="text-sm text-text-muted">{currentContrato.valorDescricao}</span>
                 ) : null}

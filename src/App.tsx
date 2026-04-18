@@ -2,6 +2,8 @@ import { lazy, Suspense, useEffect, useMemo, useRef, useState, type ReactNode } 
 import { FiltersBar } from './components/filters/FiltersBar';
 import { IndicatorCards } from './components/indicators/IndicatorCards';
 import { Header } from './components/layout/Header';
+import { Hero } from './components/layout/Hero';
+import { Footer } from './components/layout/Footer';
 import { ContratosMobileList } from './components/table/ContratosMobileList';
 import { ContratosTable } from './components/table/ContratosTable';
 import { DatabaseIcon, SearchIcon } from './components/shared/icons';
@@ -83,12 +85,22 @@ function EmptyState({
   action?: React.ReactNode;
 }) {
   return (
-    <div className="grid place-items-center rounded-lg border border-border-divider bg-surface px-4 py-16 text-center">
-      <div className="grid max-w-md gap-3">
-        <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-pill bg-surface-2 text-text-subtle">
-          {icon}
+    <div className="grid place-items-center rounded-xl border border-border-divider bg-surface px-4 py-20 text-center shadow-soft">
+      <div className="grid max-w-md gap-4">
+        <div className="relative mx-auto flex h-16 w-16 items-center justify-center">
+          <span
+            aria-hidden="true"
+            className="absolute inset-0 rounded-pill bg-primary-100 opacity-60"
+          />
+          <span
+            aria-hidden="true"
+            className="absolute inset-2 rounded-pill bg-primary-50"
+          />
+          <div className="relative flex h-10 w-10 items-center justify-center rounded-pill bg-surface text-primary-700 shadow-soft ring-1 ring-primary-200">
+            {icon}
+          </div>
         </div>
-        <h3 className="text-xl font-semibold text-text">{title}</h3>
+        <h3 className="text-xl font-semibold tracking-tight text-text">{title}</h3>
         <p className="text-base text-text-muted">{subtitle}</p>
         {action ? <div className="pt-1">{action}</div> : null}
       </div>
@@ -186,9 +198,18 @@ function App() {
     <div className="min-h-[100svh] bg-bg text-text">
       <Header />
 
+      {!isLoading && contratos.length > 0 ? (
+        <Hero
+          totalContratos={metricas.totalContratos}
+          valorTotal={metricas.valorTotal}
+          vencidos={metricas.vencidos}
+          proximosDoVencimento={metricas.proximosDoVencimento}
+        />
+      ) : null}
+
       <main
         id="main"
-        className="app-shell grid gap-4 pb-[calc(var(--safe-bottom)+24px)] pt-4 md:gap-6 md:pt-6"
+        className="app-shell grid gap-6 pb-[calc(var(--safe-bottom)+32px)] pt-6 md:gap-8 md:pt-8"
       >
         {isLoading ? (
           <>
@@ -222,8 +243,18 @@ function App() {
           </section>
         ) : (
           <>
-            <section className="grid gap-2">
-              <span className="section-kicker">Painel executivo</span>
+            <section className="grid gap-3">
+              <div className="flex flex-col gap-1">
+                <span className="section-kicker">Painel executivo</span>
+                <div className="flex flex-col gap-1 md:flex-row md:items-baseline md:justify-between md:gap-4">
+                  <h2 className="text-2xl font-semibold tracking-tight text-text">
+                    Visão geral dos contratos
+                  </h2>
+                  <p className="text-sm text-text-muted">
+                    Selecione um indicador para filtrar a base automaticamente.
+                  </p>
+                </div>
+              </div>
               <IndicatorCards metricas={metricas} activeKpi={activeKpi} onSelect={ativarKpi} />
             </section>
 
@@ -298,10 +329,15 @@ function App() {
               )}
             </section>
 
-            <section className="grid gap-2">
+            <section className="grid gap-3">
               <div className="grid gap-1">
                 <span className="section-kicker">Análise visual</span>
-                <h2 className="text-2xl font-semibold text-text">Recortes de gestão</h2>
+                <h2 className="text-2xl font-semibold tracking-tight text-text">
+                  Recortes de gestão
+                </h2>
+                <p className="text-sm text-text-muted">
+                  Distribuições e rankings calculados com base no recorte atual.
+                </p>
               </div>
 
               <Suspense fallback={chartsLoadingFallback}>
@@ -330,6 +366,8 @@ function App() {
           </>
         )}
       </main>
+
+      <Footer />
 
       {contratoSelecionado ? (
         <Suspense fallback={null}>

@@ -22,10 +22,12 @@ export function ChartsSection({
   onSelectEmpresa,
 }: ChartsSectionProps) {
   return (
-    <section className="grid gap-4 lg:grid-cols-2">
+    <section className="grid gap-4 lg:grid-cols-2 lg:gap-5">
+      <div className="lg:col-span-2">
+        <ChartVencimentos contratos={contratos} onSelectFaixa={onSelectFaixa} />
+      </div>
       <ChartStatus contratos={contratos} onSelectStatus={onSelectStatus} />
       <ChartModalidade contratos={contratos} onSelectModalidade={onSelectModalidade} />
-      <ChartVencimentos contratos={contratos} onSelectFaixa={onSelectFaixa} />
       <ChartTopEmpresasContratos contratos={contratos} onSelectEmpresa={onSelectEmpresa} />
       <ChartTopEmpresasValor contratos={contratos} onSelectEmpresa={onSelectEmpresa} />
     </section>
