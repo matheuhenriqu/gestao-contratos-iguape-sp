@@ -111,6 +111,15 @@ const TONE_STYLES: Record<
   },
 };
 
+function formatPercent(value: number, base: number): string {
+  if (!base) {
+    return '—';
+  }
+
+  const pct = (value / base) * 100;
+  return `${pct.toFixed(1).replace('.', ',')}%`;
+}
+
 function getHelper(
   key: IndicatorCardsProps['activeKpi'] | (typeof CARD_CONFIG)[number]['key'],
   metricas: IndicatorCardsProps['metricas'],
@@ -130,6 +139,30 @@ function getHelper(
       return 'Campos essenciais ausentes';
     default:
       return '';
+  }
+}
+
+function getRelativeShare(
+  key: (typeof CARD_CONFIG)[number]['key'],
+  metricas: IndicatorCardsProps['metricas'],
+): string | null {
+  const base = metricas.totalContratos;
+
+  if (!base) {
+    return null;
+  }
+
+  switch (key) {
+    case 'ativos':
+      return `${formatPercent(metricas.ativos, base)} da base`;
+    case 'vencidos':
+      return `${formatPercent(metricas.vencidos, base)} da base`;
+    case 'proximos':
+      return `${formatPercent(metricas.proximosDoVencimento, base)} da base`;
+    case 'incompletos':
+      return `${formatPercent(metricas.dadosIncompletos, base)} da base`;
+    default:
+      return null;
   }
 }
 
@@ -160,6 +193,7 @@ function IndicatorCardsComponent({ metricas, activeKpi, onSelect }: IndicatorCar
           card.key === 'valor'
             ? formatMoedaCompactaBRL(metricas.valorTotal)
             : formatNumeroInteiro(Number(numericValue));
+        const share = getRelativeShare(card.key, metricas);
 
         return (
           <button
@@ -167,7 +201,7 @@ function IndicatorCardsComponent({ metricas, activeKpi, onSelect }: IndicatorCar
             type="button"
             onClick={() => onSelect(card.key)}
             title={card.key === 'valor' ? formatMoedaBRL(metricas.valorTotal) : undefined}
-            className={`group relative flex min-h-[140px] flex-col items-start gap-3 overflow-hidden rounded-xl border bg-surface px-4 py-4 text-left transition-all duration-200 md:px-5 md:py-5 ${
+            className={`group relative flex min-h-[148px] flex-col items-start gap-3 overflow-hidden rounded-xl border bg-surface px-4 py-4 text-left transition-all duration-200 md:px-5 md:py-5 ${
               isActive
                 ? `${tone.activeBorder} shadow-raised ring-2 ${tone.activeRing} -translate-y-0.5`
                 : 'border-border shadow-soft hover:-translate-y-0.5 hover:border-border-strong hover:shadow-raised'
@@ -189,9 +223,18 @@ function IndicatorCardsComponent({ metricas, activeKpi, onSelect }: IndicatorCar
               </span>
             </div>
 
-            <span className="tnum text-3xl font-semibold leading-none tracking-tight text-text">
-              {value}
-            </span>
+            <div className="flex w-full items-baseline gap-2">
+              <span className="tnum text-3xl font-semibold leading-none tracking-tight text-text">
+                {value}
+              </span>
+              {share ? (
+                <span
+                  className={`tnum rounded-pill border px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.06em] ${tone.iconBg} ${tone.iconColor} border-transparent`}
+                >
+                  {share}
+                </span>
+              ) : null}
+            </div>
 
             <span className="text-sm leading-snug text-text-muted">
               {getHelper(card.key, metricas)}

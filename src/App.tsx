@@ -204,6 +204,7 @@ function App() {
         <Hero
           totalContratos={metricas.totalContratos}
           valorTotal={metricas.valorTotal}
+          ativos={metricas.ativos}
           vencidos={metricas.vencidos}
           proximosDoVencimento={metricas.proximosDoVencimento}
         />
@@ -257,7 +258,7 @@ function App() {
           </section>
         ) : (
           <>
-            <section className="grid gap-4">
+            <section className="grid gap-4 fade-in">
               <SectionHeader
                 kicker="Painel executivo"
                 title="Visão geral dos contratos"

@@ -97,3 +97,19 @@ export function getCriticidadeBorder(criticidade: Criticidade): string {
 
   return 'border-border';
 }
+
+export function getCriticidadeAccentColor(criticidade: Criticidade): string {
+  if (criticidade === 'critico') {
+    return 'var(--color-status-critico)';
+  }
+
+  if (criticidade === 'atencao') {
+    return 'var(--color-status-atencao)';
+  }
+
+  if (criticidade === 'ok') {
+    return 'var(--color-status-ok)';
+  }
+
+  return 'var(--color-border-strong)';
+}
