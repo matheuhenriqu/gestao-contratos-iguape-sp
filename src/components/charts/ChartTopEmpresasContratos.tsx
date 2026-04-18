@@ -6,50 +6,67 @@ import { chartAxisColor, chartGridColor, chartPalette, tooltipStyle, truncateLab
 
 type ChartTopEmpresasContratosProps = {
   contratos: Contrato[];
+  onSelectEmpresa: (empresa: string) => void;
 };
 
-export function ChartTopEmpresasContratos({ contratos }: ChartTopEmpresasContratosProps) {
+export function ChartTopEmpresasContratos({
+  contratos,
+  onSelectEmpresa,
+}: ChartTopEmpresasContratosProps) {
   const data = Object.values(
     contratos.reduce<Record<string, { label: string; total: number }>>((accumulator, contrato) => {
       const label = textoOuNaoInformado(contrato.empresaContratada);
-
-      if (!accumulator[label]) {
-        accumulator[label] = { label, total: 0 };
-      }
-
+      accumulator[label] ??= { label, total: 0 };
       accumulator[label].total += 1;
       return accumulator;
     }, {}),
   )
     .sort((a, b) => b.total - a.total || a.label.localeCompare(b.label, 'pt-BR'))
-    .slice(0, 7)
+    .slice(0, 10)
     .map((item, index) => ({
       ...item,
+      shortLabel: truncateLabel(item.label, 24),
       fill: chartPalette[index % chartPalette.length],
-      shortLabel: truncateLabel(item.label, 22),
     }));
 
   return (
     <ChartShell
-      title="Top empresas por quantidade"
-      subtitle="Empresas com maior número de contratos no recorte atual."
+      title="Top 10 empresas com mais contratos"
+      subtitle="Ranking por quantidade de contratos na consulta atual."
     >
       <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={data} layout="vertical" margin={{ top: 8, right: 12, bottom: 8, left: 8 }}>
-          <CartesianGrid stroke={chartGridColor} horizontal={false} />
-          <XAxis type="number" tick={{ fill: chartAxisColor, fontSize: 12 }} />
+        <BarChart data={data} layout="vertical" margin={{ top: 4, right: 12, bottom: 4, left: 4 }}>
+          <CartesianGrid stroke={chartGridColor} strokeDasharray="3 3" horizontal={false} />
+          <XAxis
+            type="number"
+            tick={{ fill: chartAxisColor, fontSize: 12 }}
+            tickLine={false}
+            axisLine={false}
+          />
           <YAxis
             type="category"
             dataKey="shortLabel"
             width={120}
             tick={{ fill: chartAxisColor, fontSize: 12 }}
+            tickLine={false}
+            axisLine={false}
           />
           <Tooltip
             formatter={(value: number) => formatNumeroInteiro(value)}
             labelFormatter={(_, payload) => payload?.[0]?.payload?.label ?? ''}
             contentStyle={tooltipStyle}
           />
-          <Bar dataKey="total" radius={[0, 10, 10, 0]} fill={chartPalette[0]} />
+          <Bar
+            dataKey="total"
+            radius={[0, 6, 6, 0]}
+            fill={chartPalette[1]}
+            onClick={(_, index) => {
+              const item = data[index];
+              if (item) {
+                onSelectEmpresa(item.label);
+              }
+            }}
+          />
         </BarChart>
       </ResponsiveContainer>
     </ChartShell>

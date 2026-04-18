@@ -1,42 +1,33 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { FaixaVencimento } from '../../types/contrato';
 import type {
   FaixaVencimentoFiltro,
-  FaixaValorFiltro,
+  FiltroChip,
   FiltrosContratosState,
-  OrdenacaoCampo,
-  OrdenacaoDirecao,
   StatusFiltro,
 } from '../../hooks/useFiltros';
 import { EMPTY_OPTION_VALUE } from '../../hooks/useContratos';
 import { formatFaixaVencimento, formatNumeroInteiro, formatStatusNormalizado } from '../../utils/format';
+import { FilterIcon, SearchIcon, SlidersHorizontalIcon, XIcon } from '../shared/icons';
 
 type FiltersBarProps = {
   filtros: FiltrosContratosState;
   totalResultados: number;
   totalRegistros: number;
   filtrosAtivos: number;
+  chipsAtivos: FiltroChip[];
   options: {
     modalidades: string[];
     empresas: string[];
     gestores: string[];
     fiscais: string[];
   };
-  ordenacao: {
-    campo: OrdenacaoCampo;
-    direcao: OrdenacaoDirecao;
-  };
-  onBuscaChange: (value: string) => void;
   onFilterChange: <K extends keyof FiltrosContratosState>(
     campo: K,
     value: FiltrosContratosState[K],
   ) => void;
-  onSortChange: (campo: OrdenacaoCampo, direcao: OrdenacaoDirecao) => void;
   onClear: () => void;
 };
-
-const FIELD_CLASS =
-  'w-full min-w-0 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-iguape-400 focus:ring-4 focus:ring-iguape-100';
 
 const STATUS_OPTIONS: Array<{ value: StatusFiltro; label: string }> = [
   { value: 'todos', label: 'Todos os status' },
@@ -57,47 +48,56 @@ const FAIXA_VENCIMENTO_OPTIONS: Array<{ value: FaixaVencimentoFiltro; label: str
   { value: 'acima_90', label: formatFaixaVencimento('acima_90') },
 ];
 
-const FAIXA_VALOR_OPTIONS: Array<{ value: FaixaValorFiltro; label: string }> = [
-  { value: 'todos', label: 'Todas as faixas de valor' },
-  { value: 'ate_50000', label: 'Até R$ 50 mil' },
-  { value: '50000_250000', label: 'De R$ 50 mil a R$ 250 mil' },
-  { value: '250000_1000000', label: 'De R$ 250 mil a R$ 1 milhão' },
-  { value: 'acima_1000000', label: 'Acima de R$ 1 milhão' },
-  { value: 'sem_valor', label: 'Sem valor informado' },
-];
+function fieldClass() {
+  return 'field-base focus-ring';
+}
 
-const SORT_OPTIONS: Array<{ value: `${OrdenacaoCampo}:${OrdenacaoDirecao}`; label: string }> = [
-  { value: 'dataVencimento:asc', label: 'Ordenar por vencimento mais próximo' },
-  { value: 'dataVencimento:desc', label: 'Ordenar por vencimento mais distante' },
-  { value: 'valor:desc', label: 'Ordenar por maior valor' },
-  { value: 'valor:asc', label: 'Ordenar por menor valor' },
-  { value: 'objeto:asc', label: 'Ordenar por objeto (A-Z)' },
-  { value: 'empresaContratada:asc', label: 'Ordenar por empresa (A-Z)' },
-];
+function FieldLabel({ children }: { children: string }) {
+  return <span className="field-label">{children}</span>;
+}
 
-type OptionFieldProps = {
-  label: string;
+function SearchField({
+  value,
+  onChange,
+  placeholder,
+}: {
   value: string;
   onChange: (value: string) => void;
-  options: string[];
-  includeNotInformed?: boolean;
-};
+  placeholder: string;
+}) {
+  return (
+    <label className="relative flex min-w-0 flex-1">
+      <span className="sr-only">Buscar contratos</span>
+      <SearchIcon className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-subtle" />
+      <input
+        type="search"
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        placeholder={placeholder}
+        className={`${fieldClass()} min-h-11 w-full rounded-md pl-11 pr-4 text-[14px]`}
+        aria-label="Buscar por objeto, empresa, contrato, processo, gestor ou fiscal"
+      />
+    </label>
+  );
+}
 
 function OptionField({
   label,
   value,
-  onChange,
   options,
-  includeNotInformed = true,
-}: OptionFieldProps) {
+  onChange,
+}: {
+  label: string;
+  value: string;
+  options: string[];
+  onChange: (value: string) => void;
+}) {
   return (
     <label className="flex min-w-0 flex-col gap-2">
-      <span className="text-[0.72rem] font-semibold uppercase tracking-[0.16em] text-slate-500">
-        {label}
-      </span>
-      <select className={FIELD_CLASS} value={value} onChange={(event) => onChange(event.target.value)}>
+      <FieldLabel>{label}</FieldLabel>
+      <select value={value} onChange={(event) => onChange(event.target.value)} className={fieldClass()}>
         <option value="todos">Todos</option>
-        {includeNotInformed ? <option value={EMPTY_OPTION_VALUE}>Não informado</option> : null}
+        <option value={EMPTY_OPTION_VALUE}>Não informado</option>
         {options.map((option) => (
           <option key={option} value={option}>
             {option}
@@ -108,210 +108,354 @@ function OptionField({
   );
 }
 
+function Chips({ chips }: { chips: FiltroChip[] }) {
+  if (chips.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className="flex flex-wrap gap-2">
+      {chips.map((chip) => (
+        <button
+          key={chip.id}
+          type="button"
+          onClick={chip.onRemove}
+          className="focus-ring inline-flex min-h-9 max-w-full items-center gap-2 rounded-full border border-border bg-surface px-3 text-[13px] font-medium text-muted transition hover:border-brand-600 hover:text-brand-700"
+        >
+          <span className="truncate">{chip.label}</span>
+          <XIcon className="h-3.5 w-3.5 shrink-0" />
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function ToggleField({
+  label,
+  checked,
+  onChange,
+}: {
+  label: string;
+  checked: boolean;
+  onChange: (checked: boolean) => void;
+}) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      onClick={() => onChange(!checked)}
+      className={`focus-ring flex min-h-11 w-full items-center justify-between rounded-md border px-4 text-[14px] font-medium transition ${
+        checked
+          ? 'border-brand-600 bg-primary-100 text-brand-700'
+          : 'border-border bg-surface text-muted hover:border-brand-600/50'
+      }`}
+    >
+      <span>{label}</span>
+      <span
+        className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition ${
+          checked ? 'bg-brand-600' : 'bg-border-strong'
+        }`}
+      >
+        <span
+          className={`h-5 w-5 rounded-full bg-white shadow-soft transition ${
+            checked ? 'translate-x-5' : 'translate-x-0.5'
+          }`}
+        />
+      </span>
+    </button>
+  );
+}
+
+function AdvancedFilters({
+  filtros,
+  options,
+  onFilterChange,
+}: {
+  filtros: FiltersBarProps['filtros'];
+  options: FiltersBarProps['options'];
+  onFilterChange: FiltersBarProps['onFilterChange'];
+}) {
+  return (
+    <div className="grid min-w-0 gap-4 lg:grid-cols-2 xl:grid-cols-4">
+      <label className="flex min-w-0 flex-col gap-2">
+        <FieldLabel>Status</FieldLabel>
+        <select
+          value={filtros.status}
+          onChange={(event) => onFilterChange('status', event.target.value as StatusFiltro)}
+          className={fieldClass()}
+        >
+          {STATUS_OPTIONS.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+      </label>
+
+      <OptionField
+        label="Modalidade"
+        value={filtros.modalidade}
+        options={options.modalidades}
+        onChange={(value) => onFilterChange('modalidade', value)}
+      />
+
+      <OptionField
+        label="Empresa contratada"
+        value={filtros.empresaContratada}
+        options={options.empresas}
+        onChange={(value) => onFilterChange('empresaContratada', value)}
+      />
+
+      <OptionField
+        label="Gestor"
+        value={filtros.gestor}
+        options={options.gestores}
+        onChange={(value) => onFilterChange('gestor', value)}
+      />
+
+      <OptionField
+        label="Fiscal"
+        value={filtros.fiscal}
+        options={options.fiscais}
+        onChange={(value) => onFilterChange('fiscal', value)}
+      />
+
+      <label className="flex min-w-0 flex-col gap-2">
+        <FieldLabel>Faixa de vencimento</FieldLabel>
+        <select
+          value={filtros.faixaVencimento}
+          onChange={(event) =>
+            onFilterChange('faixaVencimento', event.target.value as Exclude<FaixaVencimento, null> | 'todos')
+          }
+          className={fieldClass()}
+        >
+          {FAIXA_VENCIMENTO_OPTIONS.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+      </label>
+
+      <div className="grid grid-cols-2 gap-3">
+        <label className="flex min-w-0 flex-col gap-2">
+          <FieldLabel>Valor mínimo</FieldLabel>
+          <input
+            value={filtros.valorMin}
+            onChange={(event) => onFilterChange('valorMin', event.target.value)}
+            placeholder="R$ 0,00"
+            inputMode="decimal"
+            className={fieldClass()}
+          />
+        </label>
+        <label className="flex min-w-0 flex-col gap-2">
+          <FieldLabel>Valor máximo</FieldLabel>
+          <input
+            value={filtros.valorMax}
+            onChange={(event) => onFilterChange('valorMax', event.target.value)}
+            placeholder="R$ 999.999,99"
+            inputMode="decimal"
+            className={fieldClass()}
+          />
+        </label>
+      </div>
+
+      <div className="flex flex-col gap-3 xl:justify-end">
+        <FieldLabel>Pendência de dados</FieldLabel>
+        <ToggleField
+          label="Apenas dados incompletos"
+          checked={filtros.apenasDadosIncompletos}
+          onChange={(checked) => onFilterChange('apenasDadosIncompletos', checked)}
+        />
+      </div>
+    </div>
+  );
+}
+
 export function FiltersBar({
   filtros,
   totalResultados,
   totalRegistros,
   filtrosAtivos,
+  chipsAtivos,
   options,
-  ordenacao,
-  onBuscaChange,
   onFilterChange,
-  onSortChange,
   onClear,
 }: FiltersBarProps) {
-  const [mobileExpanded, setMobileExpanded] = useState(false);
+  const [desktopExpanded, setDesktopExpanded] = useState(filtrosAtivos > 0);
+  const [mobileOpen, setMobileOpen] = useState(false);
+
+  useEffect(() => {
+    if (!mobileOpen) {
+      return undefined;
+    }
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [mobileOpen]);
+
+  const resultLabel = useMemo(
+    () =>
+      `Exibindo ${formatNumeroInteiro(totalResultados)} de ${formatNumeroInteiro(totalRegistros)} contratos`,
+    [totalRegistros, totalResultados],
+  );
 
   return (
-    <section className="rounded-[30px] border border-white/70 bg-white/92 p-4 shadow-panel ring-1 ring-iguape-100/80 backdrop-blur-sm sm:p-5">
-      <div className="flex flex-col gap-4">
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
-          <div className="min-w-0 flex-1">
-            <div className="flex flex-wrap items-center gap-2">
-              <p className="text-[0.72rem] font-semibold uppercase tracking-[0.18em] text-iguape-700">
-                Filtros e ordenação
-              </p>
-              <span className="inline-flex min-h-9 items-center rounded-full bg-iguape-50 px-3 text-xs font-semibold text-iguape-700">
-                {formatNumeroInteiro(totalResultados)} de {formatNumeroInteiro(totalRegistros)} contratos
-              </span>
+    <>
+      <section className="hidden lg:block">
+        <div className="surface-card flex flex-col gap-4 p-4 lg:p-4">
+          <div className="flex min-w-0 flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+            <div className="flex min-w-0 flex-1 items-center gap-3">
+              <SearchField
+                value={filtros.busca}
+                onChange={(value) => onFilterChange('busca', value)}
+                placeholder="Buscar por objeto, empresa, contrato, processo…"
+              />
+
+              <button
+                type="button"
+                onClick={() => setDesktopExpanded((current) => !current)}
+                className="button-secondary focus-ring inline-flex min-h-11 shrink-0 items-center gap-2 px-4"
+                aria-expanded={desktopExpanded}
+                aria-controls="desktop-filtros-avancados"
+              >
+                <SlidersHorizontalIcon className="h-4 w-4" />
+                <span>Filtros</span>
+                {filtrosAtivos > 0 ? (
+                  <span className="rounded-full bg-brand-700 px-2 py-0.5 text-[12px] font-semibold text-white">
+                    {filtrosAtivos}
+                  </span>
+                ) : null}
+              </button>
+
               {filtrosAtivos > 0 ? (
-                <span className="inline-flex min-h-9 items-center rounded-full bg-slate-100 px-3 text-xs font-semibold text-slate-600">
-                  {formatNumeroInteiro(filtrosAtivos)} filtro{filtrosAtivos > 1 ? 's' : ''} ativo
-                  {filtrosAtivos > 1 ? 's' : ''}
-                </span>
+                <button type="button" onClick={onClear} className="button-ghost focus-ring min-h-11 px-4">
+                  Limpar
+                </button>
               ) : null}
             </div>
 
-            <label className="mt-3 flex min-w-0 flex-col gap-2">
-              <span className="text-[0.72rem] font-semibold uppercase tracking-[0.16em] text-slate-500">
-                Busca geral
-              </span>
-              <input
-                type="search"
-                value={filtros.busca}
-                onChange={(event) => onBuscaChange(event.target.value)}
-                placeholder="Buscar por objeto, empresa, contrato, processo, gestor ou fiscal"
-                className={FIELD_CLASS}
-              />
-            </label>
+            <p className="text-[13px] font-medium text-muted">{resultLabel}</p>
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-2 lg:w-[420px]">
-            <label className="flex min-w-0 flex-col gap-2">
-              <span className="text-[0.72rem] font-semibold uppercase tracking-[0.16em] text-slate-500">
-                Ordenação
-              </span>
-              <select
-                className={FIELD_CLASS}
-                value={`${ordenacao.campo}:${ordenacao.direcao}`}
-                onChange={(event) => {
-                  const [campo, direcao] = event.target.value.split(':') as [
-                    OrdenacaoCampo,
-                    OrdenacaoDirecao,
-                  ];
-                  onSortChange(campo, direcao);
-                }}
-              >
-                {SORT_OPTIONS.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-            </label>
+          {desktopExpanded ? (
+            <div id="desktop-filtros-avancados" className="grid gap-4 border-t border-border pt-4">
+              <AdvancedFilters filtros={filtros} options={options} onFilterChange={onFilterChange} />
+            </div>
+          ) : null}
 
-            <div className="flex flex-wrap items-end gap-3">
-              <button
-                type="button"
-                onClick={() => setMobileExpanded((current) => !current)}
-                className="inline-flex min-h-11 flex-1 items-center justify-center rounded-2xl border border-iguape-200 bg-iguape-50 px-4 text-sm font-semibold text-iguape-700 transition hover:bg-iguape-100 md:hidden"
-              >
-                {mobileExpanded ? 'Ocultar filtros' : 'Refinar consulta'}
-              </button>
+          <Chips chips={chipsAtivos} />
+        </div>
+      </section>
 
-              <button
-                type="button"
-                onClick={onClear}
-                className="inline-flex min-h-11 flex-1 items-center justify-center rounded-2xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-600 transition hover:border-iguape-300 hover:text-iguape-700"
-              >
-                Limpar filtros
+      <section className="sticky top-[calc(var(--header-height-mobile)+var(--safe-top)+8px)] z-30 lg:hidden">
+        <div className="surface-card flex flex-col gap-3 p-3">
+          <div className="flex items-center gap-3">
+            <SearchField
+              value={filtros.busca}
+              onChange={(value) => onFilterChange('busca', value)}
+              placeholder="Buscar contratos"
+            />
+
+            <button
+              type="button"
+              onClick={() => setMobileOpen(true)}
+              className="focus-ring inline-flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-md border border-border bg-surface text-muted transition hover:border-brand-600 hover:text-brand-700"
+              aria-label="Abrir filtros"
+            >
+              <div className="relative">
+                <FilterIcon className="h-5 w-5" />
+                {filtrosAtivos > 0 ? (
+                  <span className="absolute -right-2 -top-2 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-brand-700 px-1 text-[11px] font-semibold text-white">
+                    {filtrosAtivos}
+                  </span>
+                ) : null}
+              </div>
+            </button>
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <p className="text-[13px] font-medium text-muted">{resultLabel}</p>
+            <Chips chips={chipsAtivos} />
+          </div>
+        </div>
+      </section>
+
+      {mobileOpen ? (
+        <div
+          className="fixed inset-0 z-50 bg-slate-950/40 backdrop-blur-[2px] lg:hidden"
+          role="presentation"
+          onClick={() => setMobileOpen(false)}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="mobile-filtros-title"
+            className="absolute inset-x-0 bottom-0 flex max-h-[92svh] flex-col rounded-t-[12px] bg-surface shadow-raised"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="flex items-center justify-center py-2">
+              <span className="h-1.5 w-12 rounded-full bg-border-strong" />
+            </div>
+
+            <div className="flex items-center justify-between gap-3 border-b border-border px-4 pb-4">
+              <div>
+                <h2 id="mobile-filtros-title" className="text-[18px] font-semibold text-text">
+                  Filtros
+                </h2>
+                <p className="text-[13px] text-muted">{resultLabel}</p>
+              </div>
+
+              <div className="flex items-center gap-2">
+                {filtrosAtivos > 0 ? (
+                  <button type="button" onClick={onClear} className="button-ghost focus-ring min-h-11 px-3">
+                    Limpar
+                  </button>
+                ) : null}
+                <button
+                  type="button"
+                  onClick={() => setMobileOpen(false)}
+                  className="focus-ring inline-flex min-h-11 min-w-11 items-center justify-center rounded-md border border-border bg-surface text-muted"
+                  aria-label="Fechar filtros"
+                >
+                  <XIcon className="h-5 w-5" />
+                </button>
+              </div>
+            </div>
+
+            <div className="overflow-y-auto px-4 pb-6 pt-4">
+              <div className="grid gap-5">
+                <div className="grid gap-3">
+                  <FieldLabel>Busca geral</FieldLabel>
+                  <SearchField
+                    value={filtros.busca}
+                    onChange={(value) => onFilterChange('busca', value)}
+                    placeholder="Objeto, empresa, contrato, processo…"
+                  />
+                </div>
+
+                <AdvancedFilters filtros={filtros} options={options} onFilterChange={onFilterChange} />
+
+                <div className="grid gap-3">
+                  <FieldLabel>Filtros ativos</FieldLabel>
+                  <Chips chips={chipsAtivos} />
+                </div>
+              </div>
+            </div>
+
+            <div className="border-t border-border px-4 pb-[calc(var(--safe-bottom)+16px)] pt-4">
+              <button type="button" onClick={() => setMobileOpen(false)} className="button-primary focus-ring w-full min-h-11">
+                Ver {formatNumeroInteiro(totalResultados)} resultado{totalResultados === 1 ? '' : 's'}
               </button>
             </div>
           </div>
         </div>
-
-        <div className={`${mobileExpanded ? 'grid' : 'hidden'} gap-3 md:grid md:grid-cols-2 xl:grid-cols-4`}>
-          <label className="flex min-w-0 flex-col gap-2">
-            <span className="text-[0.72rem] font-semibold uppercase tracking-[0.16em] text-slate-500">
-              Status
-            </span>
-            <select
-              className={FIELD_CLASS}
-              value={filtros.status}
-              onChange={(event) => onFilterChange('status', event.target.value as StatusFiltro)}
-            >
-              {STATUS_OPTIONS.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </label>
-
-          <OptionField
-            label="Modalidade"
-            value={filtros.modalidade}
-            onChange={(value) => onFilterChange('modalidade', value)}
-            options={options.modalidades}
-          />
-
-          <OptionField
-            label="Empresa contratada"
-            value={filtros.empresaContratada}
-            onChange={(value) => onFilterChange('empresaContratada', value)}
-            options={options.empresas}
-          />
-
-          <OptionField
-            label="Gestor"
-            value={filtros.gestor}
-            onChange={(value) => onFilterChange('gestor', value)}
-            options={options.gestores}
-          />
-
-          <OptionField
-            label="Fiscal"
-            value={filtros.fiscal}
-            onChange={(value) => onFilterChange('fiscal', value)}
-            options={options.fiscais}
-          />
-
-          <label className="flex min-w-0 flex-col gap-2">
-            <span className="text-[0.72rem] font-semibold uppercase tracking-[0.16em] text-slate-500">
-              Faixa de vencimento
-            </span>
-            <select
-              className={FIELD_CLASS}
-              value={filtros.faixaVencimento}
-              onChange={(event) =>
-                onFilterChange('faixaVencimento', event.target.value as FaixaVencimentoFiltro)
-              }
-            >
-              {FAIXA_VENCIMENTO_OPTIONS.map((option) => (
-                <option key={option.value ?? 'null'} value={option.value ?? ''}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </label>
-
-          <label className="flex min-w-0 flex-col gap-2">
-            <span className="text-[0.72rem] font-semibold uppercase tracking-[0.16em] text-slate-500">
-              Faixa de valor
-            </span>
-            <select
-              className={FIELD_CLASS}
-              value={filtros.faixaValor}
-              onChange={(event) => onFilterChange('faixaValor', event.target.value as FaixaValorFiltro)}
-            >
-              {FAIXA_VALOR_OPTIONS.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </label>
-
-          <label className="flex min-w-0 flex-col gap-2">
-            <span className="text-[0.72rem] font-semibold uppercase tracking-[0.16em] text-slate-500">
-              Pendência de dados
-            </span>
-            <button
-              type="button"
-              aria-pressed={filtros.apenasDadosIncompletos}
-              onClick={() => onFilterChange('apenasDadosIncompletos', !filtros.apenasDadosIncompletos)}
-              className={`inline-flex min-h-[50px] items-center justify-between rounded-2xl border px-4 text-left text-sm font-semibold transition ${
-                filtros.apenasDadosIncompletos
-                  ? 'border-amber-300 bg-amber-50 text-amber-800'
-                  : 'border-slate-200 bg-white text-slate-600 hover:border-iguape-300 hover:text-iguape-700'
-              }`}
-            >
-              <span>Apenas contratos com dados incompletos</span>
-              <span
-                className={`ml-4 inline-flex h-6 w-11 rounded-full p-1 transition ${
-                  filtros.apenasDadosIncompletos ? 'bg-amber-300/80' : 'bg-slate-200'
-                }`}
-              >
-                <span
-                  className={`h-4 w-4 rounded-full bg-white shadow-sm transition ${
-                    filtros.apenasDadosIncompletos ? 'translate-x-5' : 'translate-x-0'
-                  }`}
-                />
-              </span>
-            </button>
-          </label>
-        </div>
-      </div>
-    </section>
+      ) : null}
+    </>
   );
 }

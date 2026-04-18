@@ -1,3 +1,4 @@
+import { startTransition, useEffect, useMemo, useState } from 'react';
 import contratosData from '../data/contratos.json';
 import type { Contrato } from '../types/contrato';
 import {
@@ -16,6 +17,13 @@ export type ContratosOptions = {
   fiscais: string[];
 };
 
+type UseContratosResult = {
+  contratos: Contrato[];
+  contratosById: Map<string, Contrato>;
+  options: ContratosOptions;
+  isLoading: boolean;
+};
+
 function ordenarValores(values: Array<string | null>): string[] {
   return Array.from(new Set(values.filter((value): value is string => Boolean(value))))
     .map((value) => value.trim())
@@ -32,19 +40,45 @@ function recalcularContrato(contrato: Contrato): Contrato {
     statusNormalizado: calcularStatusNormalizado(diasParaVencimento),
     faixaVencimento: calcularFaixa(diasParaVencimento),
     criticidade: calcularCriticidade(diasParaVencimento),
+    dadosIncompletos:
+      !contrato.objeto ||
+      !contrato.contrato ||
+      !contrato.empresaContratada ||
+      contrato.valor === null ||
+      contrato.dataInicio === null ||
+      contrato.dataVencimento === null,
   };
 }
 
-export function useContratos(): { contratos: Contrato[]; options: ContratosOptions } {
-  const contratos = (contratosData as Contrato[]).map(recalcularContrato);
+export function useContratos(): UseContratosResult {
+  const [contratos, setContratos] = useState<Contrato[] | null>(null);
+
+  useEffect(() => {
+    startTransition(() => {
+      setContratos((contratosData as Contrato[]).map(recalcularContrato));
+    });
+  }, []);
+
+  const options = useMemo<ContratosOptions>(() => {
+    const base = contratos ?? [];
+
+    return {
+      modalidades: ordenarValores(base.map((contrato) => contrato.modalidade)),
+      empresas: ordenarValores(base.map((contrato) => contrato.empresaContratada)),
+      gestores: ordenarValores(base.map((contrato) => contrato.gestor)),
+      fiscais: ordenarValores(base.map((contrato) => contrato.fiscal)),
+    };
+  }, [contratos]);
+
+  const contratosById = useMemo(
+    () => new Map((contratos ?? []).map((contrato) => [contrato.id, contrato])),
+    [contratos],
+  );
 
   return {
-    contratos,
-    options: {
-      modalidades: ordenarValores(contratos.map((contrato) => contrato.modalidade)),
-      empresas: ordenarValores(contratos.map((contrato) => contrato.empresaContratada)),
-      gestores: ordenarValores(contratos.map((contrato) => contrato.gestor)),
-      fiscais: ordenarValores(contratos.map((contrato) => contrato.fiscal)),
-    },
+    contratos: contratos ?? [],
+    contratosById,
+    options,
+    isLoading: contratos === null,
   };
 }

@@ -18,6 +18,7 @@ type ParsedDate = {
   iso: string | null;
   originalText: string | null;
   wasInvalid: boolean;
+  semanticStatusText: string | null;
 };
 
 export type HeaderMapResult = {
@@ -26,6 +27,52 @@ export type HeaderMapResult = {
   unexpectedHeaders: string[];
   duplicateMappings: string[];
 };
+
+type NormalizeStringOptions = {
+  preservePlaceholders?: boolean;
+};
+
+const PLACEHOLDER_VALUES = new Set([
+  '',
+  '-',
+  '--',
+  '---',
+  '—',
+  'n/a',
+  'na',
+  'não se aplica',
+  'nao se aplica',
+  'null',
+  's/i',
+  'sem informacao',
+  'sem informação',
+  'nao informado',
+  'não informado',
+  'nao informada',
+  'não informada',
+]);
+
+const SEM_VENCIMENTO_MAP = new Map<string, string>([
+  ['permanente', 'permanente'],
+  ['em vigor', 'em vigor'],
+  ['vigente', 'em vigor'],
+  ['indeterminado', 'indeterminado'],
+  ['indeterminada', 'indeterminado'],
+  ['prazo indeterminado', 'indeterminado'],
+  ['sem vencimento', 'sem vencimento'],
+]);
+
+const STATUS_LIKE_VALUES = new Set([
+  'em andamento',
+  'suspenso',
+  'suspensa',
+  'cancelado',
+  'cancelada',
+  'finalizado',
+  'finalizada',
+  'em analise',
+  'em análise',
+]);
 
 export const HEADER_DEFINITIONS: readonly HeaderDefinition[] = [
   { canonicalKey: 'id', expectedHeader: 'ID', aliases: ['id'] },
@@ -93,8 +140,81 @@ function stripAccents(value: string): string {
   return value.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 }
 
+function sanitizeInvisibleChars(value: string): string {
+  return value.replace(/[\u200B-\u200D\uFEFF]/g, '').replace(/\u00A0/g, ' ');
+}
+
 function normalizeWhitespace(value: string): string {
-  return value.replace(/\s+/g, ' ').trim();
+  return sanitizeInvisibleChars(value).replace(/\s+/g, ' ').trim();
+}
+
+function normalizeLookupValue(value: string): string {
+  return normalizeWhitespace(stripAccents(value).toLowerCase());
+}
+
+function normalizeString(value: unknown, options?: NormalizeStringOptions): string | null {
+  if (value === null || value === undefined) {
+    return null;
+  }
+
+  if (value instanceof Date && !Number.isNaN(value.getTime())) {
+    return String(value);
+  }
+
+  if (typeof value === 'number' || typeof value === 'boolean') {
+    return String(value);
+  }
+
+  if (typeof value !== 'string') {
+    return null;
+  }
+
+  const trimmed = normalizeWhitespace(value);
+  if (!trimmed) {
+    return null;
+  }
+
+  if (!options?.preservePlaceholders && PLACEHOLDER_VALUES.has(normalizeLookupValue(trimmed))) {
+    return null;
+  }
+
+  return trimmed;
+}
+
+function coerceId(value: unknown, rowNumber: number): string {
+  const asString = normalizeString(value, { preservePlaceholders: true });
+  return asString ?? `linha-${rowNumber}`;
+}
+
+function formatDateParts(year: number, month: number, day: number): string {
+  return `${year.toString().padStart(4, '0')}-${month.toString().padStart(2, '0')}-${day
+    .toString()
+    .padStart(2, '0')}`;
+}
+
+function isValidDateParts(year: number, month: number, day: number): boolean {
+  const candidate = new Date(Date.UTC(year, month - 1, day));
+  return (
+    candidate.getUTCFullYear() === year &&
+    candidate.getUTCMonth() === month - 1 &&
+    candidate.getUTCDate() === day
+  );
+}
+
+function parseExcelSerialDate(value: number): string | null {
+  if (!Number.isFinite(value)) {
+    return null;
+  }
+
+  const serial = Math.trunc(value);
+  if (serial <= 0) {
+    return null;
+  }
+
+  const utcTimestamp = Date.UTC(1899, 11, 30) + serial * 86_400_000;
+  const date = new Date(utcTimestamp);
+
+  return formatDateParts(date.getUTCFullYear(), date.getUTCMonth() + 1, date.getUTCDate());
 }
 
 export function normalizeHeaderValue(header: string): string {
@@ -104,7 +224,7 @@ export function normalizeHeaderValue(header: string): string {
       .replace(/[º°]/g, 'o')
       .replace(/[№]/g, 'n')
       .replace(/&/g, ' e ')
-      .replace(/[/()-]/g, ' ')
+      .replace(/[/()\\-]/g, ' ')
       .replace(/[^\p{L}\p{N}\s]/gu, ' '),
   );
 }
@@ -152,63 +272,9 @@ export function buildHeaderMap(headers: string[]): HeaderMapResult {
   };
 }
 
-function coerceString(value: unknown): string | null {
-  if (value === null || value === undefined) {
-    return null;
-  }
-
-  if (typeof value === 'string') {
-    const trimmed = normalizeWhitespace(value);
-    return trimmed.length > 0 ? trimmed : null;
-  }
-
-  if (typeof value === 'number' || typeof value === 'boolean' || value instanceof Date) {
-    return String(value);
-  }
-
-  return null;
-}
-
-function coerceId(value: unknown, rowNumber: number): string {
-  const asString = coerceString(value);
-  return asString ?? `linha-${rowNumber}`;
-}
-
-function formatDateParts(year: number, month: number, day: number): string {
-  return `${year.toString().padStart(4, '0')}-${month.toString().padStart(2, '0')}-${day
-    .toString()
-    .padStart(2, '0')}`;
-}
-
-function isValidDateParts(year: number, month: number, day: number): boolean {
-  const candidate = new Date(Date.UTC(year, month - 1, day));
-  return (
-    candidate.getUTCFullYear() === year &&
-    candidate.getUTCMonth() === month - 1 &&
-    candidate.getUTCDate() === day
-  );
-}
-
-function parseExcelSerialDate(value: number): string | null {
-  if (!Number.isFinite(value)) {
-    return null;
-  }
-
-  const serial = Math.trunc(value);
-
-  if (serial <= 0) {
-    return null;
-  }
-
-  const utcTimestamp = Date.UTC(1899, 11, 30) + serial * 86_400_000;
-  const date = new Date(utcTimestamp);
-
-  return formatDateParts(date.getUTCFullYear(), date.getUTCMonth() + 1, date.getUTCDate());
-}
-
 export function parseDateInput(value: unknown): ParsedDate {
   if (value === null || value === undefined || value === '') {
-    return { iso: null, originalText: null, wasInvalid: false };
+    return { iso: null, originalText: null, wasInvalid: false, semanticStatusText: null };
   }
 
   if (value instanceof Date && !Number.isNaN(value.getTime())) {
@@ -216,6 +282,7 @@ export function parseDateInput(value: unknown): ParsedDate {
       iso: formatDateParts(value.getFullYear(), value.getMonth() + 1, value.getDate()),
       originalText: null,
       wasInvalid: false,
+      semanticStatusText: null,
     };
   }
 
@@ -225,13 +292,28 @@ export function parseDateInput(value: unknown): ParsedDate {
       iso,
       originalText: iso ? null : String(value),
       wasInvalid: iso === null,
+      semanticStatusText: null,
     };
   }
 
-  const text = coerceString(value);
-
+  const text = normalizeString(value, { preservePlaceholders: true });
   if (!text) {
-    return { iso: null, originalText: null, wasInvalid: false };
+    return { iso: null, originalText: null, wasInvalid: false, semanticStatusText: null };
+  }
+
+  const lookup = normalizeLookupValue(text).replace(/[\\/.-]/g, '/');
+  if (PLACEHOLDER_VALUES.has(lookup)) {
+    return { iso: null, originalText: null, wasInvalid: false, semanticStatusText: null };
+  }
+
+  const semanticStatusText = SEM_VENCIMENTO_MAP.get(lookup) ?? null;
+  if (semanticStatusText) {
+    return {
+      iso: null,
+      originalText: semanticStatusText,
+      wasInvalid: false,
+      semanticStatusText,
+    };
   }
 
   const isoMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(text);
@@ -239,45 +321,40 @@ export function parseDateInput(value: unknown): ParsedDate {
     const year = Number(isoMatch[1]);
     const month = Number(isoMatch[2]);
     const day = Number(isoMatch[3]);
-
     if (isValidDateParts(year, month, day)) {
-      return { iso: formatDateParts(year, month, day), originalText: null, wasInvalid: false };
+      return { iso: formatDateParts(year, month, day), originalText: null, wasInvalid: false, semanticStatusText: null };
     }
   }
 
-  const brMatch = /^(\d{1,2})[/-](\d{1,2})[/-](\d{2,4})$/.exec(text);
+  const brMatch = /^(\d{1,2})[\/\\-](\d{1,2})[\/\\-](\d{2,4})$/.exec(text);
   if (brMatch) {
     const day = Number(brMatch[1]);
     const month = Number(brMatch[2]);
     const yearToken = brMatch[3] ?? '';
     const year = Number(yearToken.length === 2 ? `20${yearToken}` : yearToken);
-
     if (isValidDateParts(year, month, day)) {
-      return { iso: formatDateParts(year, month, day), originalText: null, wasInvalid: false };
+      return { iso: formatDateParts(year, month, day), originalText: null, wasInvalid: false, semanticStatusText: null };
     }
   }
 
-  const usLikeMatch = /^(\d{4})[/.](\d{1,2})[/.](\d{1,2})$/.exec(text);
-  if (usLikeMatch) {
-    const year = Number(usLikeMatch[1]);
-    const month = Number(usLikeMatch[2]);
-    const day = Number(usLikeMatch[3]);
-
+  const ymdMatch = /^(\d{4})[\/.](\d{1,2})[\/.](\d{1,2})$/.exec(text);
+  if (ymdMatch) {
+    const year = Number(ymdMatch[1]);
+    const month = Number(ymdMatch[2]);
+    const day = Number(ymdMatch[3]);
     if (isValidDateParts(year, month, day)) {
-      return { iso: formatDateParts(year, month, day), originalText: null, wasInvalid: false };
+      return { iso: formatDateParts(year, month, day), originalText: null, wasInvalid: false, semanticStatusText: null };
     }
   }
 
   if (/^\d+(?:[.,]\d+)?$/.test(text)) {
-    const numeric = Number(text.replace(',', '.'));
-    const iso = parseExcelSerialDate(numeric);
-
+    const iso = parseExcelSerialDate(Number(text.replace(',', '.')));
     if (iso) {
-      return { iso, originalText: null, wasInvalid: false };
+      return { iso, originalText: null, wasInvalid: false, semanticStatusText: null };
     }
   }
 
-  return { iso: null, originalText: text, wasInvalid: true };
+  return { iso: null, originalText: text, wasInvalid: true, semanticStatusText: null };
 }
 
 export function parseCurrencyToNumber(value: unknown): number | null {
@@ -289,13 +366,18 @@ export function parseCurrencyToNumber(value: unknown): number | null {
     return Number.isFinite(value) ? value : null;
   }
 
-  const text = coerceString(value);
+  const text = normalizeString(value, { preservePlaceholders: true });
   if (!text) {
     return null;
   }
 
-  const sanitized = text.replace(/\s+/g, '').replace(/[R$r$]/g, '').replace(/[^\d,.-]/g, '');
-  if (!sanitized) {
+  const lookup = normalizeLookupValue(text);
+  if (PLACEHOLDER_VALUES.has(lookup)) {
+    return null;
+  }
+
+  const sanitized = text.replace(/\s+/g, '').replace(/^R\$/i, '').replace(/[^\d,.-]/g, '');
+  if (!sanitized || sanitized === '-' || sanitized === '--') {
     return null;
   }
 
@@ -304,28 +386,28 @@ export function parseCurrencyToNumber(value: unknown): number | null {
   const lastComma = unsigned.lastIndexOf(',');
   const lastDot = unsigned.lastIndexOf('.');
 
-  let normalizedNumber = unsigned;
+  let normalized = unsigned;
 
   if (lastComma >= 0 && lastDot >= 0) {
     const decimalIndex = Math.max(lastComma, lastDot);
     const integerPart = unsigned.slice(0, decimalIndex).replace(/[.,]/g, '');
     const decimalPart = unsigned.slice(decimalIndex + 1).replace(/[.,]/g, '');
-    normalizedNumber = decimalPart ? `${integerPart}.${decimalPart}` : integerPart;
+    normalized = decimalPart ? `${integerPart}.${decimalPart}` : integerPart;
   } else if (lastComma >= 0) {
     const decimalDigits = unsigned.length - lastComma - 1;
-    normalizedNumber =
+    normalized =
       decimalDigits > 0 && decimalDigits <= 2
         ? `${unsigned.slice(0, lastComma).replace(/,/g, '')}.${unsigned.slice(lastComma + 1)}`
         : unsigned.replace(/,/g, '');
   } else if (lastDot >= 0) {
     const decimalDigits = unsigned.length - lastDot - 1;
-    normalizedNumber =
+    normalized =
       decimalDigits > 0 && decimalDigits <= 2
         ? `${unsigned.slice(0, lastDot).replace(/\./g, '')}.${unsigned.slice(lastDot + 1)}`
         : unsigned.replace(/\./g, '');
   }
 
-  const parsed = Number(negative ? `-${normalizedNumber}` : normalizedNumber);
+  const parsed = Number(negative ? `-${normalized}` : normalized);
   return Number.isFinite(parsed) ? parsed : null;
 }
 
@@ -357,11 +439,9 @@ export function mapRowToContratoRaw(
 
   headers.forEach((header, index) => {
     const canonicalKey = headerMap[header];
-
     if (!canonicalKey) {
       return;
     }
-
     raw[canonicalKey] = row[index] ?? null;
   });
 
@@ -373,31 +453,48 @@ export function normalizeContrato(raw: ContratoRaw, referencia: Date = new Date(
   const dataVencimento = parseDateInput(raw.dataVencimento);
   const valor = parseCurrencyToNumber(raw.valor);
   const diasParaVencimento = calcularDiasParaVencimento(dataVencimento.iso, referencia);
+  const statusOriginal =
+    normalizeString(raw.status) ??
+    (dataVencimento.semanticStatusText && dataVencimento.iso === null
+      ? dataVencimento.semanticStatusText
+      : null);
 
   const contrato: Contrato = {
     id: coerceId(raw.id, raw._rowNumber),
-    modalidade: coerceString(raw.modalidade),
-    numeroModalidade: coerceString(raw.numeroModalidade),
-    objeto: coerceString(raw.objeto),
-    processo: coerceString(raw.processo),
-    contrato: coerceString(raw.contrato),
-    empresaContratada: coerceString(raw.empresaContratada),
+    modalidade: normalizeString(raw.modalidade),
+    numeroModalidade: normalizeString(raw.numeroModalidade),
+    objeto: normalizeString(raw.objeto),
+    processo: normalizeString(raw.processo),
+    contrato: normalizeString(raw.contrato),
+    empresaContratada: normalizeString(raw.empresaContratada),
     valor,
-    valorDescricao: coerceString(raw.valorDescricao),
+    valorDescricao: normalizeString(raw.valorDescricao),
     dataInicio: dataInicio.iso,
     dataInicioTextoOriginal: dataInicio.originalText,
     dataVencimento: dataVencimento.iso,
     dataVencimentoTextoOriginal: dataVencimento.originalText,
     diasParaVencimento,
-    statusOriginal: coerceString(raw.status),
+    statusOriginal,
     statusNormalizado: calcularStatusNormalizado(diasParaVencimento),
-    gestor: coerceString(raw.gestor),
-    fiscal: coerceString(raw.fiscal),
-    observacoes: coerceString(raw.observacoes),
+    gestor: normalizeString(raw.gestor),
+    fiscal: normalizeString(raw.fiscal),
+    observacoes: normalizeString(raw.observacoes),
     dadosIncompletos: false,
     faixaVencimento: calcularFaixa(diasParaVencimento),
     criticidade: calcularCriticidade(diasParaVencimento),
   };
+
+  const empresaLookup = contrato.empresaContratada ? normalizeLookupValue(contrato.empresaContratada) : null;
+  const statusLookup = statusOriginal ? normalizeLookupValue(statusOriginal) : null;
+
+  if (
+    empresaLookup &&
+    (STATUS_LIKE_VALUES.has(empresaLookup) || (statusLookup !== null && empresaLookup === statusLookup)) &&
+    contrato.contrato === null &&
+    contrato.valor === null
+  ) {
+    contrato.empresaContratada = null;
+  }
 
   contrato.dadosIncompletos =
     !contrato.objeto ||
@@ -414,6 +511,7 @@ export function collectContratoIssues(raw: ContratoRaw, contrato: Contrato): str
   const issues: string[] = [];
   const dataInicio = parseDateInput(raw.dataInicio);
   const dataVencimento = parseDateInput(raw.dataVencimento);
+  const valorOriginal = normalizeString(raw.valor, { preservePlaceholders: true });
 
   if (dataInicio.wasInvalid) {
     issues.push(`linha ${raw._rowNumber}: Data Início inválida (${String(raw.dataInicio)})`);
@@ -423,28 +521,8 @@ export function collectContratoIssues(raw: ContratoRaw, contrato: Contrato): str
     issues.push(`linha ${raw._rowNumber}: Data Vencimento inválida (${String(raw.dataVencimento)})`);
   }
 
-  if (raw.valor !== null && raw.valor !== undefined && raw.valor !== '' && contrato.valor === null) {
-    issues.push(`linha ${raw._rowNumber}: Valor não parseável (${String(raw.valor)})`);
-  }
-
-  const diasOriginais =
-    typeof raw.diasParaVencimento === 'number'
-      ? raw.diasParaVencimento
-      : typeof raw.diasParaVencimento === 'string'
-        ? raw.diasParaVencimento.trim().length > 0
-          ? Number(raw.diasParaVencimento.replace(',', '.'))
-          : null
-        : null;
-
-  if (
-    typeof diasOriginais === 'number' &&
-    Number.isFinite(diasOriginais) &&
-    contrato.diasParaVencimento !== null &&
-    diasOriginais !== contrato.diasParaVencimento
-  ) {
-    issues.push(
-      `linha ${raw._rowNumber}: Dias p/ Vencimento divergente (planilha=${diasOriginais}, runtime=${contrato.diasParaVencimento})`,
-    );
+  if (valorOriginal && contrato.valor === null && !PLACEHOLDER_VALUES.has(normalizeLookupValue(valorOriginal))) {
+    issues.push(`linha ${raw._rowNumber}: Valor não parseável (${valorOriginal})`);
   }
 
   if (contrato.dadosIncompletos) {

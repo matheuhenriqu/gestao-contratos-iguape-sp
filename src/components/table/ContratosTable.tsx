@@ -2,19 +2,20 @@ import { Fragment } from 'react';
 import type { Contrato } from '../../types/contrato';
 import type { OrdenacaoCampo } from '../../hooks/useFiltros';
 import {
-  formatDataBR,
+  formatDataOuTraco,
   formatDiasParaVencimento,
   formatMoedaBRL,
   formatNumeroInteiro,
   textoOuNaoInformado,
 } from '../../utils/format';
 import {
-  getCriticidadeClasses,
+  getCriticidadeTextClass,
   getStatusClasses,
   getStatusLabel,
 } from '../shared/contratoAppearance';
-import { groupContratosByModalidade } from '../shared/groupContratosByModalidade';
 import { Pagination } from '../shared/Pagination';
+import { ArrowUpDownIcon } from '../shared/icons';
+import { groupContratosByModalidade } from '../shared/groupContratosByModalidade';
 
 type ContratosTableProps = {
   contratos: Contrato[];
@@ -26,26 +27,33 @@ type ContratosTableProps = {
     campo: OrdenacaoCampo;
     direcao: 'asc' | 'desc';
   };
+  compactMode: boolean;
+  onToggleCompactMode: () => void;
   onSort: (campo: OrdenacaoCampo) => void;
   onOpenDetail: (contrato: Contrato) => void;
   onPageChange: (page: number) => void;
   onPageSizeChange: (value: number) => void;
 };
 
-const COLUMNS: Array<{ key: OrdenacaoCampo; label: string; align?: 'left' | 'right' }> = [
-  { key: 'modalidade', label: 'Modalidade' },
-  { key: 'numeroModalidade', label: 'Nº Modalidade' },
-  { key: 'objeto', label: 'Objeto' },
-  { key: 'processo', label: 'Processo' },
-  { key: 'contrato', label: 'Contrato' },
-  { key: 'empresaContratada', label: 'Empresa Contratada' },
-  { key: 'valor', label: 'Valor', align: 'right' },
-  { key: 'dataInicio', label: 'Data Início' },
-  { key: 'dataVencimento', label: 'Data Vencimento' },
-  { key: 'diasParaVencimento', label: 'Dias p/ Vencimento', align: 'right' },
-  { key: 'statusNormalizado', label: 'Status' },
-  { key: 'gestor', label: 'Gestor' },
-  { key: 'fiscal', label: 'Fiscal' },
+const COLUMNS: Array<{
+  key: OrdenacaoCampo;
+  label: string;
+  minWidth: string;
+  align?: 'left' | 'right';
+}> = [
+  { key: 'modalidade', label: 'Modalidade', minWidth: '150px' },
+  { key: 'numeroModalidade', label: 'Nº Modalidade', minWidth: '130px' },
+  { key: 'objeto', label: 'Objeto', minWidth: '280px' },
+  { key: 'processo', label: 'Processo', minWidth: '130px' },
+  { key: 'contrato', label: 'Contrato', minWidth: '130px' },
+  { key: 'empresaContratada', label: 'Empresa Contratada', minWidth: '220px' },
+  { key: 'valor', label: 'Valor', minWidth: '160px', align: 'right' },
+  { key: 'dataInicio', label: 'Data Início', minWidth: '120px' },
+  { key: 'dataVencimento', label: 'Data Vencimento', minWidth: '140px' },
+  { key: 'diasParaVencimento', label: 'Dias p/ Vencimento', minWidth: '160px', align: 'right' },
+  { key: 'statusNormalizado', label: 'Status', minWidth: '130px' },
+  { key: 'gestor', label: 'Gestor', minWidth: '170px' },
+  { key: 'fiscal', label: 'Fiscal', minWidth: '170px' },
 ] as const;
 
 function SortButton({
@@ -57,23 +65,27 @@ function SortButton({
 }: {
   label: string;
   field: OrdenacaoCampo;
-  align?: 'left' | 'right' | undefined;
+  align?: 'left' | 'right';
   ordenacao: ContratosTableProps['ordenacao'];
   onSort: (campo: OrdenacaoCampo) => void;
 }) {
   const active = ordenacao.campo === field;
-  const arrow = active ? (ordenacao.direcao === 'asc' ? '↑' : '↓') : '↕';
+  const direction = active ? (ordenacao.direcao === 'asc' ? '↑' : '↓') : null;
 
   return (
     <button
       type="button"
       onClick={() => onSort(field)}
-      className={`inline-flex w-full items-center gap-2 text-xs font-semibold uppercase tracking-[0.15em] text-slate-500 transition hover:text-iguape-700 ${
+      className={`focus-ring inline-flex w-full items-center gap-2 text-[12px] font-medium uppercase tracking-[0.12em] text-subtle transition hover:text-brand-700 ${
         align === 'right' ? 'justify-end text-right' : 'justify-start text-left'
       }`}
     >
       <span>{label}</span>
-      <span className={`text-[0.68rem] ${active ? 'text-iguape-700' : 'text-slate-400'}`}>{arrow}</span>
+      {direction ? (
+        <span className="text-brand-700">{direction}</span>
+      ) : (
+        <ArrowUpDownIcon className="h-3.5 w-3.5 text-subtle" />
+      )}
     </button>
   );
 }
@@ -85,6 +97,8 @@ export function ContratosTable({
   totalPaginas,
   itensPorPagina,
   ordenacao,
+  compactMode,
+  onToggleCompactMode,
   onSort,
   onOpenDetail,
   onPageChange,
@@ -93,30 +107,33 @@ export function ContratosTable({
   const inicio = totalResultados === 0 ? 0 : (paginaAtual - 1) * itensPorPagina + 1;
   const fim = Math.min(paginaAtual * itensPorPagina, totalResultados);
   const groups = groupContratosByModalidade(contratos);
+  const rowPadding = compactMode ? 'py-2.5' : 'py-3.5';
 
   return (
-    <section className="hidden xl:block">
-      <div className="overflow-hidden rounded-[28px] border border-slate-200/80 bg-white">
-        <div className="border-b border-slate-200/80 bg-slate-50/80 px-5 py-4">
-          <div className="flex items-center justify-between gap-4">
-            <div>
-              <p className="text-sm font-semibold text-slate-700">
-                Mostrando {formatNumeroInteiro(inicio)} a {formatNumeroInteiro(fim)} de{' '}
-                {formatNumeroInteiro(totalResultados)} contratos
-              </p>
-              <p className="mt-1 text-sm text-slate-500">
-                Clique em uma linha para abrir o detalhe completo do contrato.
-              </p>
-            </div>
+    <section className="hidden md:block">
+      <div className="surface-card overflow-hidden">
+        <div className="flex flex-col gap-4 border-b border-border px-4 py-4 lg:flex-row lg:items-center lg:justify-between lg:px-5">
+          <div>
+            <p className="text-[16px] font-semibold text-text">Consulta principal dos contratos</p>
+            <p className="text-[13px] text-muted">
+              Mostrando {formatNumeroInteiro(inicio)} a {formatNumeroInteiro(fim)} de{' '}
+              {formatNumeroInteiro(totalResultados)} contratos filtrados.
+            </p>
+          </div>
 
-            <label className="flex items-center gap-3 text-sm text-slate-500">
-              <span>Itens por página</span>
+          <div className="flex flex-wrap items-center gap-3">
+            <button type="button" onClick={onToggleCompactMode} className="button-secondary min-h-11 px-4">
+              {compactMode ? 'Modo confortável' : 'Modo compacto'}
+            </button>
+
+            <label className="flex items-center gap-2 text-[13px] font-medium text-muted">
+              <span>Por página</span>
               <select
                 value={itensPorPagina}
                 onChange={(event) => onPageSizeChange(Number(event.target.value))}
-                className="rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 outline-none transition focus:border-iguape-400 focus:ring-4 focus:ring-iguape-100"
+                className="field-base min-w-[88px]"
               >
-                {[10, 12, 20, 30].map((value) => (
+                {[25, 50, 100].map((value) => (
                   <option key={value} value={value}>
                     {value}
                   </option>
@@ -126,62 +143,46 @@ export function ContratosTable({
           </div>
         </div>
 
-        <div className="overflow-hidden">
-          <table className="w-full table-fixed">
-            <colgroup>
-              <col className="w-[8%]" />
-              <col className="w-[6.5%]" />
-              <col className="w-[15%]" />
-              <col className="w-[5.5%]" />
-              <col className="w-[5.5%]" />
-              <col className="w-[10.5%]" />
-              <col className="w-[8%]" />
-              <col className="w-[6.5%]" />
-              <col className="w-[6.5%]" />
-              <col className="w-[6.5%]" />
-              <col className="w-[6.5%]" />
-              <col className="w-[7.5%]" />
-              <col className="w-[7.5%]" />
-            </colgroup>
-            <thead className="bg-white">
-              <tr className="border-b border-slate-200/80">
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[1880px] border-separate border-spacing-0">
+            <thead className="sticky top-0 z-20 bg-surface">
+              <tr>
                 {COLUMNS.map((column) => (
-                  <th key={column.key} className="px-3 py-3">
+                  <th
+                    key={column.key}
+                    className="border-b border-border bg-surface px-4 py-3"
+                    style={{ minWidth: column.minWidth }}
+                    scope="col"
+                  >
                     <SortButton
                       label={column.label}
                       field={column.key}
-                      align={column.align}
                       ordenacao={ordenacao}
                       onSort={onSort}
+                      {...(column.align ? { align: column.align } : {})}
                     />
                   </th>
                 ))}
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-200/80 text-[0.8rem] text-slate-700">
+            <tbody>
               {groups.map((group) => (
                 <Fragment key={group.key}>
-                  <tr className="border-y border-slate-200/80 bg-slate-50/90">
-                    <td colSpan={COLUMNS.length} className="px-4 py-3">
+                  <tr>
+                    <td colSpan={COLUMNS.length} className="border-b border-border bg-surface-2 px-4 py-3">
                       <div className="flex items-center justify-between gap-4">
                         <div className="min-w-0">
-                          <p className="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-slate-400">
-                            Modalidade
-                          </p>
-                          <p className="mt-1 truncate text-sm font-semibold text-slate-800">{group.label}</p>
+                          <p className="field-label">Modalidade</p>
+                          <p className="truncate text-[14px] font-semibold text-text">{group.label}</p>
                         </div>
-                        <div className="text-right">
-                          <p className="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-slate-400">
-                            {formatNumeroInteiro(group.quantidade)} contrato{group.quantidade === 1 ? '' : 's'}
-                          </p>
-                          <p className="mt-1 text-sm font-semibold text-iguape-700">
-                            {group.possuiValorInformado ? formatMoedaBRL(group.valorTotal) : 'Não informado'}
-                          </p>
-                        </div>
+                        <p className="text-[13px] font-medium text-muted">
+                          {formatNumeroInteiro(group.quantidade)} contrato{group.quantidade === 1 ? '' : 's'}
+                        </p>
                       </div>
                     </td>
                   </tr>
-                  {group.contratos.map((contrato) => (
+
+                  {group.contratos.map((contrato, index) => (
                     <tr
                       key={contrato.id}
                       tabIndex={0}
@@ -192,57 +193,78 @@ export function ContratosTable({
                           onOpenDetail(contrato);
                         }
                       }}
-                      className="cursor-pointer bg-white transition hover:bg-iguape-50/60 focus-visible:bg-iguape-50/70 focus-visible:outline-none"
+                      className={`cursor-pointer transition hover:bg-primary-100/40 focus-visible:bg-primary-100/40 ${
+                        index % 2 === 0 ? 'bg-surface' : 'bg-surface-2/45'
+                      }`}
                     >
-                      <td className="px-3 py-3 align-top" title={textoOuNaoInformado(contrato.modalidade)}>
-                        <span className="block truncate font-medium">{textoOuNaoInformado(contrato.modalidade)}</span>
+                      <td className={`border-b border-border px-4 align-middle ${rowPadding}`}>
+                        <span className="block truncate text-[14px] text-text" title={textoOuNaoInformado(contrato.modalidade)}>
+                          {textoOuNaoInformado(contrato.modalidade)}
+                        </span>
                       </td>
-                      <td className="px-3 py-3 align-top" title={textoOuNaoInformado(contrato.numeroModalidade)}>
-                        <span className="block truncate">{textoOuNaoInformado(contrato.numeroModalidade)}</span>
+                      <td className={`border-b border-border px-4 align-middle ${rowPadding}`}>
+                        <span className="block truncate text-[14px] text-text" title={textoOuNaoInformado(contrato.numeroModalidade)}>
+                          {textoOuNaoInformado(contrato.numeroModalidade)}
+                        </span>
                       </td>
-                      <td className="px-3 py-3 align-top" title={textoOuNaoInformado(contrato.objeto)}>
-                        <span className="block truncate font-semibold text-slate-800">
+                      <td className={`border-b border-border px-4 align-middle ${rowPadding}`}>
+                        <span
+                          className="line-clamp-2 text-[14px] font-medium leading-5 text-text"
+                          title={textoOuNaoInformado(contrato.objeto)}
+                        >
                           {textoOuNaoInformado(contrato.objeto)}
                         </span>
                       </td>
-                      <td className="px-3 py-3 align-top" title={textoOuNaoInformado(contrato.processo)}>
-                        <span className="block truncate">{textoOuNaoInformado(contrato.processo)}</span>
+                      <td className={`border-b border-border px-4 align-middle ${rowPadding}`}>
+                        <span className="block truncate text-[14px] text-text" title={textoOuNaoInformado(contrato.processo)}>
+                          {textoOuNaoInformado(contrato.processo)}
+                        </span>
                       </td>
-                      <td className="px-3 py-3 align-top" title={textoOuNaoInformado(contrato.contrato)}>
-                        <span className="block truncate">{textoOuNaoInformado(contrato.contrato)}</span>
+                      <td className={`border-b border-border px-4 align-middle ${rowPadding}`}>
+                        <span className="block truncate text-[14px] text-text" title={textoOuNaoInformado(contrato.contrato)}>
+                          {textoOuNaoInformado(contrato.contrato)}
+                        </span>
                       </td>
-                      <td
-                        className="px-3 py-3 align-top"
-                        title={textoOuNaoInformado(contrato.empresaContratada)}
-                      >
-                        <span className="block truncate">{textoOuNaoInformado(contrato.empresaContratada)}</span>
-                      </td>
-                      <td className="px-3 py-3 text-right align-top font-semibold text-slate-800">
-                        {formatMoedaBRL(contrato.valor)}
-                      </td>
-                      <td className="px-3 py-3 align-top">{formatDataBR(contrato.dataInicio)}</td>
-                      <td className="px-3 py-3 align-top">{formatDataBR(contrato.dataVencimento)}</td>
-                      <td
-                        className={`px-3 py-3 text-right align-top font-semibold ${getCriticidadeClasses(
-                          contrato.criticidade,
-                        )}`}
-                      >
-                        {formatDiasParaVencimento(contrato.diasParaVencimento)}
-                      </td>
-                      <td className="px-3 py-3 align-top">
+                      <td className={`border-b border-border px-4 align-middle ${rowPadding}`}>
                         <span
-                          className={`inline-flex min-h-8 items-center rounded-full px-3 text-xs font-semibold ${getStatusClasses(
+                          className="block truncate text-[14px] text-text"
+                          title={textoOuNaoInformado(contrato.empresaContratada)}
+                        >
+                          {textoOuNaoInformado(contrato.empresaContratada)}
+                        </span>
+                      </td>
+                      <td className={`tabular-nums border-b border-border px-4 text-right align-middle ${rowPadding}`}>
+                        <span className="text-[14px] font-medium text-text">{formatMoedaBRL(contrato.valor)}</span>
+                      </td>
+                      <td className={`border-b border-border px-4 align-middle ${rowPadding}`}>
+                        <span className="text-[14px] text-text">{formatDataOuTraco(contrato.dataInicio)}</span>
+                      </td>
+                      <td className={`border-b border-border px-4 align-middle ${rowPadding}`}>
+                        <span className="text-[14px] text-text">{formatDataOuTraco(contrato.dataVencimento)}</span>
+                      </td>
+                      <td className={`tabular-nums border-b border-border px-4 text-right align-middle ${rowPadding}`}>
+                        <span className={`text-[14px] font-medium ${getCriticidadeTextClass(contrato.criticidade)}`}>
+                          {formatDiasParaVencimento(contrato.diasParaVencimento)}
+                        </span>
+                      </td>
+                      <td className={`border-b border-border px-4 align-middle ${rowPadding}`}>
+                        <span
+                          className={`inline-flex min-h-6 items-center rounded-full px-2 py-0.5 text-[12px] font-medium ${getStatusClasses(
                             contrato,
                           )}`}
                         >
                           {getStatusLabel(contrato)}
                         </span>
                       </td>
-                      <td className="px-3 py-3 align-top" title={textoOuNaoInformado(contrato.gestor)}>
-                        <span className="block truncate">{textoOuNaoInformado(contrato.gestor)}</span>
+                      <td className={`border-b border-border px-4 align-middle ${rowPadding}`}>
+                        <span className="block truncate text-[14px] text-text" title={textoOuNaoInformado(contrato.gestor)}>
+                          {textoOuNaoInformado(contrato.gestor)}
+                        </span>
                       </td>
-                      <td className="px-3 py-3 align-top" title={textoOuNaoInformado(contrato.fiscal)}>
-                        <span className="block truncate">{textoOuNaoInformado(contrato.fiscal)}</span>
+                      <td className={`border-b border-border px-4 align-middle ${rowPadding}`}>
+                        <span className="block truncate text-[14px] text-text" title={textoOuNaoInformado(contrato.fiscal)}>
+                          {textoOuNaoInformado(contrato.fiscal)}
+                        </span>
                       </td>
                     </tr>
                   ))}
@@ -252,7 +274,10 @@ export function ContratosTable({
           </table>
         </div>
 
-        <div className="flex items-center justify-end border-t border-slate-200/80 px-5 py-4">
+        <div className="flex flex-col gap-3 border-t border-border px-4 py-4 lg:flex-row lg:items-center lg:justify-between lg:px-5">
+          <p className="text-[13px] text-muted">
+            Navegação paginada para manter a consulta leve e estável em uso administrativo.
+          </p>
           <Pagination currentPage={paginaAtual} totalPages={totalPaginas} onPageChange={onPageChange} />
         </div>
       </div>

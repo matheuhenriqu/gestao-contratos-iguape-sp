@@ -2,55 +2,76 @@ import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxi
 import type { Contrato } from '../../types/contrato';
 import { formatMoedaBRL, textoOuNaoInformado } from '../../utils/format';
 import { ChartShell } from './ChartShell';
-import { chartAxisColor, chartGridColor, chartPalette, tooltipStyle, truncateLabel } from './chartConfig';
+import {
+  chartAxisColor,
+  chartGridColor,
+  chartPalette,
+  formatAxisCurrency,
+  tooltipStyle,
+  truncateLabel,
+} from './chartConfig';
 
 type ChartTopEmpresasValorProps = {
   contratos: Contrato[];
+  onSelectEmpresa: (empresa: string) => void;
 };
 
-export function ChartTopEmpresasValor({ contratos }: ChartTopEmpresasValorProps) {
+export function ChartTopEmpresasValor({ contratos, onSelectEmpresa }: ChartTopEmpresasValorProps) {
   const data = Object.values(
     contratos.reduce<Record<string, { label: string; total: number }>>((accumulator, contrato) => {
       const label = textoOuNaoInformado(contrato.empresaContratada);
-      const valor = contrato.valor ?? 0;
-
-      if (!accumulator[label]) {
-        accumulator[label] = { label, total: 0 };
-      }
-
-      accumulator[label].total += valor;
+      accumulator[label] ??= { label, total: 0 };
+      accumulator[label].total += contrato.valor ?? 0;
       return accumulator;
     }, {}),
   )
     .sort((a, b) => b.total - a.total || a.label.localeCompare(b.label, 'pt-BR'))
-    .slice(0, 7)
+    .slice(0, 10)
     .map((item, index) => ({
       ...item,
-      fill: chartPalette[(index + 1) % chartPalette.length],
       shortLabel: truncateLabel(item.label, 22),
+      fill: chartPalette[(index + 2) % chartPalette.length],
     }));
 
   return (
     <ChartShell
-      title="Top empresas por valor contratado"
-      subtitle="Somatório dos valores informados por empresa contratada."
+      title="Top 10 empresas por valor contratado"
+      subtitle="Empresas com maior volume financeiro somado dentro do recorte."
     >
       <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={data} layout="vertical" margin={{ top: 8, right: 18, bottom: 8, left: 8 }}>
-          <CartesianGrid stroke={chartGridColor} horizontal={false} />
-          <XAxis type="number" tick={{ fill: chartAxisColor, fontSize: 12 }} hide />
+        <BarChart data={data} layout="vertical" margin={{ top: 4, right: 12, bottom: 4, left: 4 }}>
+          <CartesianGrid stroke={chartGridColor} strokeDasharray="3 3" horizontal={false} />
+          <XAxis
+            type="number"
+            tick={{ fill: chartAxisColor, fontSize: 12 }}
+            tickFormatter={formatAxisCurrency}
+            tickLine={false}
+            axisLine={false}
+          />
           <YAxis
             type="category"
             dataKey="shortLabel"
             width={120}
             tick={{ fill: chartAxisColor, fontSize: 12 }}
+            tickLine={false}
+            axisLine={false}
           />
           <Tooltip
             formatter={(value: number) => formatMoedaBRL(value)}
             labelFormatter={(_, payload) => payload?.[0]?.payload?.label ?? ''}
             contentStyle={tooltipStyle}
           />
-          <Bar dataKey="total" radius={[0, 10, 10, 0]} fill={chartPalette[2]} />
+          <Bar
+            dataKey="total"
+            radius={[0, 6, 6, 0]}
+            fill={chartPalette[2]}
+            onClick={(_, index) => {
+              const item = data[index];
+              if (item) {
+                onSelectEmpresa(item.label);
+              }
+            }}
+          />
         </BarChart>
       </ResponsiveContainer>
     </ChartShell>

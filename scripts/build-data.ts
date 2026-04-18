@@ -8,6 +8,8 @@ import {
   collectContratoIssues,
   mapRowToContratoRaw,
   normalizeContrato,
+  parseCurrencyToNumber,
+  parseDateInput,
 } from '../src/utils/normalize';
 
 type SheetInspection = {
@@ -71,12 +73,44 @@ function summarizeIssueCategories(issues: string[]): Record<string, number> {
   }, {});
 }
 
-function countStatusOriginais(contratos: Contrato[]): Record<string, number> {
-  return contratos.reduce<Record<string, number>>((accumulator, contrato) => {
-    const status = contrato.statusOriginal ?? 'Sem status textual';
-    accumulator[status] = (accumulator[status] ?? 0) + 1;
-    return accumulator;
-  }, {});
+function uniqueIds(contratos: Contrato[]): { contratos: Contrato[]; duplicateWarnings: string[] } {
+  const seen = new Map<string, number>();
+  const warnings: string[] = [];
+
+  return {
+    contratos: contratos.map((contrato) => {
+      const count = (seen.get(contrato.id) ?? 0) + 1;
+      seen.set(contrato.id, count);
+
+      if (count === 1) {
+        return contrato;
+      }
+
+      const nextId = `${contrato.id}--${count}`;
+      warnings.push(`ID duplicado "${contrato.id}" ajustado para "${nextId}"`);
+      return { ...contrato, id: nextId };
+    }),
+    duplicateWarnings: warnings,
+  };
+}
+
+function sampleRandomContratos(contratos: Contrato[], size = 3): Contrato[] {
+  if (contratos.length <= size) {
+    return contratos;
+  }
+
+  const pool = [...contratos];
+  const samples: Contrato[] = [];
+
+  for (let index = 0; index < size; index += 1) {
+    const pick = Math.floor(Math.random() * pool.length);
+    const [selected] = pool.splice(pick, 1);
+    if (selected) {
+      samples.push(selected);
+    }
+  }
+
+  return samples;
 }
 
 async function main(): Promise<void> {
@@ -119,31 +153,54 @@ async function main(): Promise<void> {
   console.log('Mapeamentos duplicados:', headerMapResult.duplicateMappings);
 
   const rawRegistros: ContratoRaw[] = contratosSheet.dataRows.map((row, index) =>
-    mapRowToContratoRaw(contratosSheet!.headers, row, headerMapResult.headerMap, index + 2),
+    mapRowToContratoRaw(contratosSheet.headers, row, headerMapResult.headerMap, index + 2),
   );
 
   const referencia = new Date();
-  const contratos: Contrato[] = rawRegistros.map((registro) => normalizeContrato(registro, referencia));
+  const contratosNormalizados = rawRegistros.map((registro) => normalizeContrato(registro, referencia));
+  const { contratos, duplicateWarnings } = uniqueIds(contratosNormalizados);
+
   const inconsistencias = rawRegistros.flatMap((registro, index) =>
-    collectContratoIssues(registro, contratos[index]!),
+    collectContratoIssues(registro, contratos[index] ?? contratosNormalizados[index]!),
   );
+
+  const datasNaoParseadas = rawRegistros
+    .flatMap((registro) => [
+      { linha: registro._rowNumber, campo: 'dataInicio', resultado: parseDateInput(registro.dataInicio) },
+      { linha: registro._rowNumber, campo: 'dataVencimento', resultado: parseDateInput(registro.dataVencimento) },
+    ])
+    .filter((item) => item.resultado.wasInvalid)
+    .map((item) => ({
+      linha: item.linha,
+      campo: item.campo,
+      valorOriginal: item.resultado.originalText,
+    }));
+
+  const valoresNaoParseados = rawRegistros
+    .filter((registro) => {
+      const parsed = parseCurrencyToNumber(registro.valor);
+      return parsed === null && registro.valor !== null && registro.valor !== undefined && `${registro.valor}`.trim() !== '';
+    })
+    .map((registro) => ({
+      linha: registro._rowNumber,
+      valorOriginal: registro.valor,
+    }));
 
   printSection('QUALIDADE DOS DADOS');
   console.log('Data de referência do cálculo:', referencia.toISOString().slice(0, 10));
   console.log('Total de registros:', contratos.length);
   console.log('Campos vazios por coluna:', countEmptyValues(contratosSheet.headers, contratosSheet.dataRows));
-  console.log('Status textuais originais:', countStatusOriginais(contratos));
-  console.log(
-    'Registros sem dataVencimento normalizada:',
-    contratos.filter((registro) => registro.dataVencimento === null).length,
-  );
   console.log('Registros com dadosIncompletos:', contratos.filter((registro) => registro.dadosIncompletos).length);
+  console.log('Datas não parseadas:', datasNaoParseadas.length, datasNaoParseadas.slice(0, 20));
+  console.log('Valores monetários não parseados:', valoresNaoParseados.length, valoresNaoParseados.slice(0, 20));
+  console.log('IDs duplicados ajustados:', duplicateWarnings.length, duplicateWarnings.slice(0, 20));
   console.log('Inconsistências encontradas:', inconsistencias.length);
   console.log('Resumo de inconsistências:', summarizeIssueCategories(inconsistencias));
   console.log('Exemplos de inconsistências:', inconsistencias.slice(0, 20));
+  console.log('3 exemplos aleatórios normalizados:', sampleRandomContratos(contratos, 3));
 
   await mkdir(path.dirname(OUTPUT_PATH), { recursive: true });
-  await writeFile(OUTPUT_PATH, `${JSON.stringify(contratos, null, 2)}\n`, 'utf8');
+  await writeFile(OUTPUT_PATH, JSON.stringify(contratos), 'utf8');
 
   printSection('SAÍDA');
   console.log('JSON gerado em:', OUTPUT_PATH);

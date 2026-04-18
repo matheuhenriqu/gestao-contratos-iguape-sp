@@ -1,4 +1,4 @@
-import type { Contrato, Criticidade } from '../../types/contrato';
+import type { Contrato, Criticidade, FaixaVencimento } from '../../types/contrato';
 import { formatStatusNormalizado, textoOuNaoInformado } from '../../utils/format';
 
 export function getStatusLabel(contrato: Contrato): string {
@@ -11,48 +11,96 @@ export function getStatusLabel(contrato: Contrato): string {
 
 export function getStatusClasses(contrato: Contrato): string {
   if (contrato.statusNormalizado === 'vencido') {
-    return 'border border-rose-200 bg-rose-50 text-rose-700';
+    return 'bg-status-critical/10 text-status-critical';
   }
 
   if (contrato.statusNormalizado === 'vence_hoje') {
-    return 'border border-amber-200 bg-amber-50 text-amber-700';
+    return 'bg-status-warning/12 text-status-warning';
   }
 
   if (contrato.statusNormalizado === 'ativo') {
-    return 'border border-sky-200 bg-sky-50 text-sky-700';
+    return 'bg-status-ok/12 text-status-ok';
   }
 
-  return 'border border-slate-200 bg-slate-100 text-slate-600';
+  return 'bg-surface-2 text-muted';
 }
 
-export function getCriticidadeClasses(criticidade: Criticidade): string {
+export function getCriticidadeTextClass(criticidade: Criticidade): string {
   if (criticidade === 'critico') {
-    return 'text-rose-700';
+    return 'text-status-critical';
   }
 
   if (criticidade === 'atencao') {
-    return 'text-amber-700';
+    return 'text-status-warning';
   }
 
   if (criticidade === 'ok') {
-    return 'text-iguape-700';
+    return 'text-status-ok';
   }
 
-  return 'text-slate-500';
+  return 'text-subtle';
 }
 
-export function getAccentBorderClasses(criticidade: Criticidade): string {
+export function getCriticidadeSurfaceClass(criticidade: Criticidade): string {
   if (criticidade === 'critico') {
-    return 'border-l-4 border-l-rose-400';
+    return 'bg-status-critical/8 text-status-critical';
   }
 
   if (criticidade === 'atencao') {
-    return 'border-l-4 border-l-amber-400';
+    return 'bg-status-warning/10 text-status-warning';
   }
 
   if (criticidade === 'ok') {
-    return 'border-l-4 border-l-iguape-400';
+    return 'bg-status-ok/10 text-status-ok';
   }
 
-  return 'border-l-4 border-l-slate-200';
+  return 'bg-surface-2 text-muted';
+}
+
+export function getFaixaTone(faixa: FaixaVencimento): string {
+  if (faixa === 'vencidos') {
+    return 'bg-status-critical';
+  }
+
+  if (faixa === 'vencem_hoje') {
+    return 'bg-status-warning';
+  }
+
+  if (faixa === 'ate_7') {
+    return 'bg-brand-600';
+  }
+
+  if (faixa === 'ate_30') {
+    return 'bg-brand-700';
+  }
+
+  if (faixa === 'ate_60') {
+    return 'bg-brand-700/80';
+  }
+
+  if (faixa === 'ate_90') {
+    return 'bg-brand-600/70';
+  }
+
+  if (faixa === 'acima_90') {
+    return 'bg-secondary-600/80';
+  }
+
+  return 'bg-border-strong';
+}
+
+export function getCriticidadeBorder(criticidade: Criticidade): string {
+  if (criticidade === 'critico') {
+    return 'border-status-critical/24';
+  }
+
+  if (criticidade === 'atencao') {
+    return 'border-status-warning/24';
+  }
+
+  if (criticidade === 'ok') {
+    return 'border-status-ok/24';
+  }
+
+  return 'border-border';
 }

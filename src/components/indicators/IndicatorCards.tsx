@@ -1,4 +1,13 @@
-import { formatMoedaBRL, formatNumeroInteiro } from '../../utils/format';
+import { memo } from 'react';
+import { formatMoedaBRL, formatMoedaCompactaBRL, formatNumeroInteiro } from '../../utils/format';
+import {
+  AlertCircleIcon,
+  BuildingIcon,
+  CheckCircleIcon,
+  ClockIcon,
+  DatabaseIcon,
+  WalletIcon,
+} from '../shared/icons';
 
 type IndicatorCardsProps = {
   metricas: {
@@ -9,82 +18,97 @@ type IndicatorCardsProps = {
     proximosDoVencimento: number;
     dadosIncompletos: number;
   };
+  activeKpi: 'total' | 'valor' | 'ativos' | 'vencidos' | 'proximos' | 'incompletos' | null;
+  onSelect: (kpi: 'total' | 'valor' | 'ativos' | 'vencidos' | 'proximos' | 'incompletos') => void;
 };
 
-const CARDS = [
+const CARD_CONFIG = [
   {
-    key: 'totalContratos',
+    key: 'total',
     label: 'Total de contratos',
-    tone: 'text-iguape-700',
-    helper: 'registros na consulta atual',
-    featured: false,
+    helper: 'base consolidada atual',
+    valueKey: 'totalContratos',
+    icon: DatabaseIcon,
   },
   {
-    key: 'valorTotal',
+    key: 'valor',
     label: 'Valor total',
-    tone: 'text-iguape-800',
-    helper: 'soma dos valores informados',
-    featured: true,
+    helper: 'somatório com tooltip completo',
+    valueKey: 'valorTotal',
+    icon: WalletIcon,
   },
   {
     key: 'ativos',
-    label: 'Contratos ativos',
-    tone: 'text-sky-700',
+    label: 'Ativos',
     helper: 'vigentes além de hoje',
-    featured: false,
+    valueKey: 'ativos',
+    icon: CheckCircleIcon,
   },
   {
     key: 'vencidos',
-    label: 'Contratos vencidos',
-    tone: 'text-rose-700',
-    helper: 'com vencimento expirado',
-    featured: false,
+    label: 'Vencidos',
+    helper: 'prazo expirado',
+    valueKey: 'vencidos',
+    icon: AlertCircleIcon,
   },
   {
-    key: 'proximosDoVencimento',
+    key: 'proximos',
     label: 'Próximos do vencimento',
-    tone: 'text-amber-700',
-    helper: 'até 30 dias, sem atraso',
-    featured: false,
+    helper: 'até 30 dias sem atraso',
+    valueKey: 'proximosDoVencimento',
+    icon: ClockIcon,
   },
   {
-    key: 'dadosIncompletos',
+    key: 'incompletos',
     label: 'Dados incompletos',
-    tone: 'text-slate-700',
     helper: 'campos essenciais ausentes',
-    featured: false,
+    valueKey: 'dadosIncompletos',
+    icon: BuildingIcon,
   },
 ] as const;
 
-export function IndicatorCards({ metricas }: IndicatorCardsProps) {
+function IndicatorCardsComponent({ metricas, activeKpi, onSelect }: IndicatorCardsProps) {
   return (
-    <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-6">
-      {CARDS.map((card) => {
-        const value =
-          card.key === 'valorTotal'
-            ? formatMoedaBRL(metricas.valorTotal)
-            : formatNumeroInteiro(metricas[card.key]);
+    <section
+      aria-label="Indicadores principais"
+      className="grid grid-cols-1 gap-3 min-[480px]:grid-cols-2 md:grid-cols-3 xl:grid-cols-6"
+    >
+      {CARD_CONFIG.map((card) => {
+        const Icon = card.icon;
+        const numericValue = metricas[card.valueKey];
+        const isActive = activeKpi === card.key;
+        const isCurrency = card.key === 'valor';
+        const value = isCurrency
+          ? formatMoedaCompactaBRL(metricas.valorTotal)
+          : formatNumeroInteiro(Number(numericValue));
 
         return (
-          <article
+          <button
             key={card.key}
-            className={`rounded-[28px] border border-white/70 bg-white/90 px-4 py-4 shadow-soft ring-1 ring-iguape-100/70 backdrop-blur-sm ${
-              card.featured ? 'sm:col-span-2 xl:col-span-2' : 'xl:col-span-1'
+            type="button"
+            onClick={() => onSelect(card.key)}
+            title={isCurrency ? formatMoedaBRL(metricas.valorTotal) : undefined}
+            className={`focus-ring surface-card flex min-w-0 flex-col items-start gap-3 p-5 text-left transition hover:border-brand-600/50 hover:bg-primary-100/25 lg:p-6 ${
+              isActive ? 'border-brand-600 shadow-soft' : ''
             }`}
           >
-            <div className="h-1.5 w-12 rounded-full bg-gradient-to-r from-iguape-600 to-iguape-400" />
-            <p className="mt-4 text-[0.72rem] font-semibold uppercase tracking-[0.18em] text-slate-500">
-              {card.label}
-            </p>
-            <p
-              className={`mt-3 break-words text-[1.35rem] font-semibold tracking-[-0.04em] sm:text-[1.55rem] ${card.tone}`}
-            >
+            <div className="flex items-center gap-2">
+              <Icon className="h-[18px] w-[18px] text-brand-600" />
+              <span className="text-[12px] font-medium uppercase tracking-[0.12em] text-subtle">
+                {card.label}
+              </span>
+            </div>
+
+            <span className="tabular-nums text-[24px] font-semibold leading-none text-text">
               {value}
-            </p>
-            <p className="mt-2 text-sm text-slate-500">{card.helper}</p>
-          </article>
+            </span>
+
+            <span className="text-[13px] leading-5 text-muted">{card.helper}</span>
+          </button>
         );
       })}
     </section>
   );
 }
+
+export const IndicatorCards = memo(IndicatorCardsComponent);

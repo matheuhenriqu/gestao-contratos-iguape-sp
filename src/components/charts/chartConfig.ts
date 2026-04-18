@@ -1,54 +1,47 @@
-import { formatMoedaBRL, formatNumeroInteiro } from '../../utils/format';
+import { formatMoedaCompactaBRL, formatNumeroInteiro } from '../../utils/format';
 
-export const chartPalette = [
-  '#325497',
-  '#3a5ea6',
-  '#2996cc',
-  '#4daed5',
-  '#88c4de',
-  '#b7d8ea',
-  '#d7e8f6',
-];
+export const chartPalette = ['#1f3767', '#3a5ea6', '#5579be', '#7f9cd0', '#aec1e1', '#d6e0f2'];
 
-export const chartGridColor = '#dbe5f1';
-export const chartAxisColor = '#5d6f86';
+export const chartGridColor = '#e2e6ec';
+export const chartAxisColor = '#6b7280';
 
 export const statusColors: Record<string, string> = {
-  ativo: '#3a5ea6',
-  vence_hoje: '#d48a1e',
-  vencido: '#b54e52',
-  sem_status: '#94a3b8',
+  ativo: '#2f6f5f',
+  vence_hoje: '#b37a28',
+  vencido: '#9e4c4b',
+  sem_status: '#9aa3b2',
 };
 
 export const faixaColors: Record<string, string> = {
-  vencidos: '#b54e52',
-  vencem_hoje: '#d48a1e',
-  ate_7: '#e2a43d',
-  ate_30: '#5b86c2',
-  ate_60: '#3a5ea6',
-  ate_90: '#4daed5',
-  acima_90: '#88c4de',
+  vencidos: '#9e4c4b',
+  vencem_hoje: '#b37a28',
+  ate_7: '#5579be',
+  ate_30: '#3a5ea6',
+  ate_60: '#5478a6',
+  ate_90: '#6e90bb',
+  acima_90: '#2f8aa3',
 };
 
 export const tooltipStyle = {
-  borderRadius: '18px',
-  border: '1px solid #d7e2f1',
-  backgroundColor: 'rgba(255,255,255,0.98)',
-  boxShadow: '0 20px 45px -30px rgba(34, 54, 100, 0.35)',
+  borderRadius: '10px',
+  border: '1px solid #e2e6ec',
+  backgroundColor: '#ffffff',
+  boxShadow: '0 12px 30px -18px rgba(15, 23, 42, 0.35)',
+  fontSize: '13px',
 };
 
-export function formatTooltipNumber(value: number): string {
-  return formatNumeroInteiro(value);
-}
-
-export function formatTooltipCurrency(value: number): string {
-  return formatMoedaBRL(value);
-}
-
-export function truncateLabel(value: string, maxLength = 26): string {
+export function truncateLabel(value: string, maxLength = 28): string {
   if (value.length <= maxLength) {
     return value;
   }
 
   return `${value.slice(0, maxLength - 1)}…`;
+}
+
+export function formatAxisCurrency(value: number): string {
+  return formatMoedaCompactaBRL(value).replace(',0 ', ' ');
+}
+
+export function formatAxisNumber(value: number): string {
+  return formatNumeroInteiro(value);
 }
