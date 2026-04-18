@@ -166,16 +166,24 @@ function Chips({ chips }: { chips: FiltroChip[] }) {
   }
 
   return (
-    <div className="flex flex-wrap gap-2">
+    <div className="flex flex-wrap items-center gap-2">
+      <span className="text-[11px] font-semibold uppercase tracking-[0.1em] text-text-subtle">
+        Ativo{chips.length === 1 ? '' : 's'}
+      </span>
       {chips.map((chip) => (
         <button
           key={chip.id}
           type="button"
           onClick={chip.onRemove}
-          className="inline-flex min-h-8 max-w-full items-center gap-1.5 rounded-pill border border-primary-200 bg-primary-50 px-3 text-xs font-medium text-primary-800 transition hover:border-primary-600"
+          className="group inline-flex min-h-8 max-w-full items-center gap-1.5 rounded-pill border border-primary-200 bg-primary-50 px-2.5 pl-3 text-xs font-medium text-primary-800 transition hover:border-primary-600 hover:bg-primary-100"
         >
           <span className="truncate">{chip.label}</span>
-          <XIcon className="h-3.5 w-3.5 shrink-0" />
+          <span
+            aria-hidden="true"
+            className="inline-flex h-4 w-4 items-center justify-center rounded-pill bg-primary-200/60 text-primary-800 transition group-hover:bg-primary-600 group-hover:text-text-inverse"
+          >
+            <XIcon className="h-3 w-3" />
+          </span>
         </button>
       ))}
     </div>

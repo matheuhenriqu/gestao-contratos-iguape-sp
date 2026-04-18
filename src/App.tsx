@@ -2,6 +2,8 @@ import { lazy, Suspense, useEffect, useMemo, useRef, useState, type ReactNode } 
 import { FiltersBar } from './components/filters/FiltersBar';
 import { IndicatorCards } from './components/indicators/IndicatorCards';
 import { Header } from './components/layout/Header';
+import { Hero } from './components/layout/Hero';
+import { Footer } from './components/layout/Footer';
 import { ContratosMobileList } from './components/table/ContratosMobileList';
 import { ContratosTable } from './components/table/ContratosTable';
 import { DatabaseIcon, SearchIcon } from './components/shared/icons';
@@ -196,6 +198,15 @@ function App() {
     <div className="min-h-[100svh] bg-bg text-text">
       <Header />
 
+      {!isLoading && contratos.length > 0 ? (
+        <Hero
+          totalContratos={metricas.totalContratos}
+          valorTotal={metricas.valorTotal}
+          vencidos={metricas.vencidos}
+          proximosDoVencimento={metricas.proximosDoVencimento}
+        />
+      ) : null}
+
       <main
         id="main"
         className="app-shell grid gap-6 pb-[calc(var(--safe-bottom)+32px)] pt-6 md:gap-8 md:pt-8"
@@ -355,6 +366,8 @@ function App() {
           </>
         )}
       </main>
+
+      <Footer />
 
       {contratoSelecionado ? (
         <Suspense fallback={null}>

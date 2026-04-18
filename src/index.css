@@ -273,7 +273,16 @@ a {
   }
 
   .status-pill {
-    @apply inline-flex items-center rounded-pill px-2.5 py-0.5 text-xs font-medium;
+    @apply inline-flex items-center gap-1.5 rounded-pill px-2.5 py-0.5 text-xs font-medium;
+  }
+
+  .status-pill::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    border-radius: var(--radius-pill);
+    background: currentColor;
+    opacity: 0.65;
   }
 
   .skeleton-block {
