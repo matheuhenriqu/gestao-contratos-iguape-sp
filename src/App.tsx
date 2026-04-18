@@ -1,9 +1,11 @@
 import { lazy, Suspense, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { FiltersBar } from './components/filters/FiltersBar';
 import { IndicatorCards } from './components/indicators/IndicatorCards';
+import { BackToTop } from './components/layout/BackToTop';
 import { Header } from './components/layout/Header';
 import { Hero } from './components/layout/Hero';
 import { Footer } from './components/layout/Footer';
+import { SectionHeader } from './components/layout/SectionHeader';
 import { ContratosMobileList } from './components/table/ContratosMobileList';
 import { ContratosTable } from './components/table/ContratosTable';
 import { DatabaseIcon, SearchIcon } from './components/shared/icons';
@@ -213,22 +215,34 @@ function App() {
       >
         {isLoading ? (
           <>
+            <div className="grid gap-3">
+              <SkeletonBlock className="h-3 w-24" />
+              <SkeletonBlock className="h-7 w-72" />
+              <SkeletonBlock className="h-4 w-full max-w-lg" />
+            </div>
+
             <section className="grid grid-cols-1 gap-3 min-[480px]:grid-cols-2 md:grid-cols-3 xl:grid-cols-6 xl:gap-4">
               {Array.from({ length: 6 }).map((_, index) => (
                 <div key={index} className="surface-card grid gap-3 p-4 md:p-5">
-                  <SkeletonBlock className="h-3 w-24" />
+                  <div className="flex items-center justify-between">
+                    <SkeletonBlock className="h-3 w-24" />
+                    <SkeletonBlock className="h-9 w-9 rounded-lg" />
+                  </div>
                   <SkeletonBlock className="h-8 w-36" />
                   <SkeletonBlock className="h-4 w-40" />
                 </div>
               ))}
             </section>
 
-            <div className="surface-card grid gap-4 p-4">
-              <SkeletonBlock className="h-11 w-full" />
+            <div className="surface-card grid gap-4 p-5">
+              <div className="flex gap-3">
+                <SkeletonBlock className="h-11 flex-1" />
+                <SkeletonBlock className="h-11 w-32" />
+              </div>
               <SkeletonBlock className="h-28 w-full" />
             </div>
 
-            <div className="surface-card grid gap-4 p-4">
+            <div className="surface-card grid gap-4 p-5">
               <SkeletonBlock className="h-5 w-52" />
               <SkeletonBlock className="h-[420px] w-full" />
             </div>
@@ -243,18 +257,12 @@ function App() {
           </section>
         ) : (
           <>
-            <section className="grid gap-3">
-              <div className="flex flex-col gap-1">
-                <span className="section-kicker">Painel executivo</span>
-                <div className="flex flex-col gap-1 md:flex-row md:items-baseline md:justify-between md:gap-4">
-                  <h2 className="text-2xl font-semibold tracking-tight text-text">
-                    Visão geral dos contratos
-                  </h2>
-                  <p className="text-sm text-text-muted">
-                    Selecione um indicador para filtrar a base automaticamente.
-                  </p>
-                </div>
-              </div>
+            <section className="grid gap-4">
+              <SectionHeader
+                kicker="Painel executivo"
+                title="Visão geral dos contratos"
+                description="Selecione um indicador para filtrar a base automaticamente e explorar o recorte."
+              />
               <IndicatorCards metricas={metricas} activeKpi={activeKpi} onSelect={ativarKpi} />
             </section>
 
@@ -270,20 +278,17 @@ function App() {
             />
 
             <section ref={tableSectionRef} className="grid gap-4">
-              <div className="grid gap-2">
-                <span className="section-kicker">Consulta operacional</span>
-                <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
-                  <div className="grid gap-1">
-                    <h2 className="text-2xl font-semibold text-text">Base de contratos</h2>
-                    <p className="text-base text-text-muted">
-                      Leitura administrativa com filtros, ordenação, paginação e detalhe contextual.
-                    </p>
-                  </div>
-                  <p className="tnum text-sm text-text-muted">
-                    {formatNumeroInteiro(totalResultados)} contrato{totalResultados === 1 ? '' : 's'} no recorte atual
-                  </p>
-                </div>
-              </div>
+              <SectionHeader
+                kicker="Consulta operacional"
+                title="Base de contratos"
+                description="Leitura administrativa com filtros, ordenação, paginação e detalhe contextual."
+                trailing={
+                  <span className="tnum inline-flex items-center rounded-pill border border-border bg-surface px-3 py-1.5 text-sm font-medium text-text-muted">
+                    <span className="mr-1.5 inline-block h-1.5 w-1.5 rounded-pill bg-primary-600" />
+                    {formatNumeroInteiro(totalResultados)} no recorte atual
+                  </span>
+                }
+              />
 
               {totalResultados === 0 ? (
                 <EmptyState
@@ -329,16 +334,12 @@ function App() {
               )}
             </section>
 
-            <section className="grid gap-3">
-              <div className="grid gap-1">
-                <span className="section-kicker">Análise visual</span>
-                <h2 className="text-2xl font-semibold tracking-tight text-text">
-                  Recortes de gestão
-                </h2>
-                <p className="text-sm text-text-muted">
-                  Distribuições e rankings calculados com base no recorte atual.
-                </p>
-              </div>
+            <section className="grid gap-4">
+              <SectionHeader
+                kicker="Análise visual"
+                title="Recortes de gestão"
+                description="Distribuições e rankings calculados com base no recorte atual — clique nos gráficos para aplicar filtros automaticamente."
+              />
 
               <Suspense fallback={chartsLoadingFallback}>
                 <LazyChartsSection
@@ -368,6 +369,8 @@ function App() {
       </main>
 
       <Footer />
+
+      <BackToTop />
 
       {contratoSelecionado ? (
         <Suspense fallback={null}>
