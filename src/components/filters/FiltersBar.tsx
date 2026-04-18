@@ -332,7 +332,25 @@ export function FiltersBar({
   return (
     <>
       <section className="hidden lg:block">
-        <div className="surface-card flex flex-col gap-4 p-5">
+        <div className="surface-card flex flex-col gap-4 p-5 md:p-6">
+          <div className="flex items-center justify-between gap-3">
+            <div className="grid gap-1">
+              <span className="section-kicker">Busca e filtros</span>
+              <p className="text-sm text-text-muted">
+                Refine o recorte ou pesquise por qualquer campo da base.
+              </p>
+            </div>
+
+            <p
+              role="status"
+              aria-live="polite"
+              className="tnum inline-flex shrink-0 items-center gap-1.5 rounded-pill border border-border bg-surface-2/60 px-3 py-1.5 text-xs font-medium text-text-muted"
+            >
+              <span aria-hidden="true" className="inline-block h-1.5 w-1.5 rounded-pill bg-primary-600" />
+              {resultLabel}
+            </p>
+          </div>
+
           <div className="flex flex-col gap-3 xl:flex-row xl:items-center">
             <SearchField
               value={filtros.busca}
@@ -344,12 +362,12 @@ export function FiltersBar({
               <button
                 type="button"
                 onClick={() => setDesktopExpanded((current) => !current)}
-                className="button-secondary shrink-0"
+                className={`button-secondary shrink-0 ${desktopExpanded ? 'border-primary-300 bg-primary-50 text-primary-800' : ''}`}
                 aria-expanded={desktopExpanded}
                 aria-controls="desktop-filtros-avancados"
               >
                 <SlidersHorizontalIcon className="h-4 w-4" />
-                <span>Filtros</span>
+                <span>{desktopExpanded ? 'Ocultar filtros' : 'Filtros avançados'}</span>
                 {filtrosAtivos > 0 ? (
                   <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-pill bg-primary-600 px-1.5 text-xs font-semibold text-text-inverse">
                     {filtrosAtivos}
@@ -368,18 +386,17 @@ export function FiltersBar({
           {desktopExpanded ? (
             <div
               id="desktop-filtros-avancados"
-              className="grid gap-4 rounded-lg border border-border-divider bg-surface-2/60 p-4"
+              className="grid gap-4 rounded-lg border border-border-divider bg-surface-2/60 p-4 fade-in"
             >
               <AdvancedFilters filtros={filtros} options={options} onFilterChange={onFilterChange} />
             </div>
           ) : null}
 
-          <div className="flex flex-col gap-3 border-t border-border-divider pt-3 xl:flex-row xl:items-center xl:justify-between">
-            <Chips chips={chipsAtivos} />
-            <p role="status" aria-live="polite" className="tnum shrink-0 text-sm text-text-muted">
-              {resultLabel}
-            </p>
-          </div>
+          {chipsAtivos.length > 0 ? (
+            <div className="flex flex-col gap-3 border-t border-border-divider pt-3">
+              <Chips chips={chipsAtivos} />
+            </div>
+          ) : null}
         </div>
       </section>
 

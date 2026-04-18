@@ -9,6 +9,7 @@ import {
   textoOuNaoInformado,
 } from '../../utils/format';
 import {
+  getCriticidadeAccentColor,
   getCriticidadeTextClass,
   getStatusClasses,
   getStatusLabel,
@@ -187,7 +188,10 @@ export function ContratosTable({
                         index % 2 === 0 ? 'bg-surface' : 'bg-[rgba(238,242,246,.5)]'
                       } hover:cursor-pointer hover:bg-primary-50 focus-visible:bg-primary-50`}
                     >
-                      <td className={`border-b border-border-divider px-3 align-middle first:pl-4 ${rowPadding}`}>
+                      <td
+                        className={`border-b border-border-divider pl-4 pr-3 align-middle ${rowPadding}`}
+                        style={{ boxShadow: `inset 3px 0 0 0 ${getCriticidadeAccentColor(contrato.criticidade)}` }}
+                      >
                         <span className={`status-pill ${getStatusClasses(contrato)}`}>{getStatusLabel(contrato)}</span>
                       </td>
 
