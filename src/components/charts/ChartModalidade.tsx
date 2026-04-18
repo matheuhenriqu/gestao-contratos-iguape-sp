@@ -1,8 +1,18 @@
-import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
+import { useMemo } from 'react';
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  LabelList,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from 'recharts';
 import type { Contrato } from '../../types/contrato';
 import { formatNumeroInteiro, textoOuNaoInformado } from '../../utils/format';
 import { ChartShell } from './ChartShell';
-import { chartAxisColor, chartGridColor, chartPalette, tooltipStyle, truncateLabel } from './chartConfig';
+import { chartAxisColor, chartGridColor, tooltipStyle, truncateLabel } from './chartConfig';
 
 type ChartModalidadeProps = {
   contratos: Contrato[];
@@ -10,41 +20,44 @@ type ChartModalidadeProps = {
 };
 
 export function ChartModalidade({ contratos, onSelectModalidade }: ChartModalidadeProps) {
-  const data = Object.values(
-    contratos.reduce<Record<string, { label: string; total: number }>>((accumulator, contrato) => {
-      const label = textoOuNaoInformado(contrato.modalidade);
-      accumulator[label] ??= { label, total: 0 };
-      accumulator[label].total += 1;
-      return accumulator;
-    }, {}),
-  )
-    .sort((a, b) => b.total - a.total || a.label.localeCompare(b.label, 'pt-BR'))
-    .slice(0, 10)
-    .map((item, index) => ({
-      ...item,
-      shortLabel: truncateLabel(item.label, 24),
-      fill: chartPalette[index % chartPalette.length],
-    }));
+  const data = useMemo(
+    () =>
+      Object.values(
+        contratos.reduce<Record<string, { label: string; total: number }>>((accumulator, contrato) => {
+          const label = textoOuNaoInformado(contrato.modalidade);
+          accumulator[label] ??= { label, total: 0 };
+          accumulator[label].total += 1;
+          return accumulator;
+        }, {}),
+      )
+        .sort((a, b) => b.total - a.total || a.label.localeCompare(b.label, 'pt-BR'))
+        .slice(0, 10)
+        .map((item) => ({
+          ...item,
+          shortLabel: truncateLabel(item.label, 28),
+        })),
+    [contratos],
+  );
 
   return (
     <ChartShell
       title="Contratos por modalidade"
-      subtitle="Modalidades mais frequentes dentro do recorte consultado."
+      subtitle="Frequência de modalidades no recorte filtrado."
     >
       <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={data} layout="vertical" margin={{ top: 4, right: 12, bottom: 4, left: 4 }}>
+        <BarChart data={data} layout="vertical" margin={{ top: 4, right: 22, bottom: 4, left: 4 }}>
           <CartesianGrid stroke={chartGridColor} strokeDasharray="3 3" horizontal={false} />
           <XAxis
             type="number"
-            tick={{ fill: chartAxisColor, fontSize: 12 }}
+            tick={{ fill: chartAxisColor, fontSize: 11 }}
             tickLine={false}
             axisLine={false}
           />
           <YAxis
             type="category"
             dataKey="shortLabel"
-            width={120}
-            tick={{ fill: chartAxisColor, fontSize: 12 }}
+            width={138}
+            tick={{ fill: chartAxisColor, fontSize: 11 }}
             tickLine={false}
             axisLine={false}
           />
@@ -55,7 +68,10 @@ export function ChartModalidade({ contratos, onSelectModalidade }: ChartModalida
           />
           <Bar
             dataKey="total"
-            radius={[0, 6, 6, 0]}
+            fill="var(--color-primary-600)"
+            radius={[0, 8, 8, 0]}
+            barSize={14}
+            cursor="pointer"
             onClick={(_, index) => {
               const item = data[index];
               if (item) {
@@ -63,9 +79,13 @@ export function ChartModalidade({ contratos, onSelectModalidade }: ChartModalida
               }
             }}
           >
-            {data.map((entry) => (
-              <Cell key={entry.label} fill={entry.fill} cursor="pointer" />
-            ))}
+            <LabelList
+              dataKey="total"
+              position="right"
+              offset={8}
+              formatter={(value: number) => formatNumeroInteiro(value)}
+              style={{ fill: 'var(--color-text-muted)', fontSize: 11 }}
+            />
           </Bar>
         </BarChart>
       </ResponsiveContainer>

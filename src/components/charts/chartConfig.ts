@@ -1,33 +1,43 @@
 import { formatMoedaCompactaBRL, formatNumeroInteiro } from '../../utils/format';
 
-export const chartPalette = ['#1f3767', '#3a5ea6', '#5579be', '#7f9cd0', '#aec1e1', '#d6e0f2'];
+export const chartPalette = [
+  'var(--color-primary-900)',
+  'var(--color-primary-700)',
+  'var(--color-primary-600)',
+  'var(--color-primary-500)',
+  'var(--color-primary-200)',
+];
 
-export const chartGridColor = '#e2e6ec';
-export const chartAxisColor = '#6b7280';
-
-export const statusColors: Record<string, string> = {
-  ativo: '#2f6f5f',
-  vence_hoje: '#b37a28',
-  vencido: '#9e4c4b',
-  sem_status: '#9aa3b2',
+export const donutPalette = {
+  vencido: 'var(--color-status-critico)',
+  critico: 'var(--color-status-atencao)',
+  atencao: 'var(--color-primary-500)',
+  ok: 'var(--color-primary-700)',
+  neutro: 'var(--color-status-neutro)',
 };
 
 export const faixaColors: Record<string, string> = {
-  vencidos: '#9e4c4b',
-  vencem_hoje: '#b37a28',
-  ate_7: '#5579be',
-  ate_30: '#3a5ea6',
-  ate_60: '#5478a6',
-  ate_90: '#6e90bb',
-  acima_90: '#2f8aa3',
+  vencidos: 'var(--color-status-critico)',
+  vencem_hoje: 'var(--color-status-critico)',
+  ate_7: 'var(--color-status-atencao)',
+  ate_30: 'var(--color-primary-500)',
+  ate_60: 'var(--color-primary-600)',
+  ate_90: 'var(--color-primary-700)',
+  acima_90: 'var(--color-primary-900)',
 };
 
+export const chartGridColor = 'var(--color-border)';
+export const chartAxisColor = 'var(--color-text-subtle)';
+
 export const tooltipStyle = {
-  borderRadius: '10px',
-  border: '1px solid #e2e6ec',
-  backgroundColor: '#ffffff',
-  boxShadow: '0 12px 30px -18px rgba(15, 23, 42, 0.35)',
-  fontSize: '13px',
+  borderRadius: 'var(--radius-md)',
+  border: '1px solid var(--color-border)',
+  backgroundColor: 'var(--color-surface)',
+  boxShadow: 'var(--shadow-raised)',
+  color: 'var(--color-text)',
+  fontSize: '12px',
+  lineHeight: '18px',
+  padding: '8px 10px',
 };
 
 export function truncateLabel(value: string, maxLength = 28): string {

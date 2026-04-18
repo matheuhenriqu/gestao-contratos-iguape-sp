@@ -11,18 +11,22 @@ export function getStatusLabel(contrato: Contrato): string {
 
 export function getStatusClasses(contrato: Contrato): string {
   if (contrato.statusNormalizado === 'vencido') {
-    return 'bg-status-critical/10 text-status-critical';
+    return 'bg-status-criticalBg text-status-critical';
   }
 
   if (contrato.statusNormalizado === 'vence_hoje') {
-    return 'bg-status-warning/12 text-status-warning';
+    return 'bg-status-criticalBg text-status-critical';
+  }
+
+  if (contrato.diasParaVencimento !== null && contrato.diasParaVencimento > 0 && contrato.diasParaVencimento <= 30) {
+    return 'bg-status-warningBg text-status-warning';
   }
 
   if (contrato.statusNormalizado === 'ativo') {
-    return 'bg-status-ok/12 text-status-ok';
+    return 'bg-status-okBg text-status-ok';
   }
 
-  return 'bg-surface-2 text-muted';
+  return 'bg-status-neutralBg text-status-neutral';
 }
 
 export function getCriticidadeTextClass(criticidade: Criticidade): string {
@@ -38,68 +42,57 @@ export function getCriticidadeTextClass(criticidade: Criticidade): string {
     return 'text-status-ok';
   }
 
-  return 'text-subtle';
+  return 'text-text-subtle';
 }
 
 export function getCriticidadeSurfaceClass(criticidade: Criticidade): string {
   if (criticidade === 'critico') {
-    return 'bg-status-critical/8 text-status-critical';
+    return 'bg-status-criticalBg text-status-critical';
   }
 
   if (criticidade === 'atencao') {
-    return 'bg-status-warning/10 text-status-warning';
+    return 'bg-status-warningBg text-status-warning';
   }
 
   if (criticidade === 'ok') {
-    return 'bg-status-ok/10 text-status-ok';
+    return 'bg-status-okBg text-status-ok';
   }
 
-  return 'bg-surface-2 text-muted';
+  return 'bg-status-neutralBg text-status-neutral';
 }
 
 export function getFaixaTone(faixa: FaixaVencimento): string {
-  if (faixa === 'vencidos') {
-    return 'bg-status-critical';
+  switch (faixa) {
+    case 'vencidos':
+      return 'bg-status-critical';
+    case 'vencem_hoje':
+      return 'bg-status-critical';
+    case 'ate_7':
+      return 'bg-status-warning';
+    case 'ate_30':
+      return 'bg-primary-500';
+    case 'ate_60':
+      return 'bg-primary-600';
+    case 'ate_90':
+      return 'bg-primary-700';
+    case 'acima_90':
+      return 'bg-primary-900';
+    default:
+      return 'bg-border-strong';
   }
-
-  if (faixa === 'vencem_hoje') {
-    return 'bg-status-warning';
-  }
-
-  if (faixa === 'ate_7') {
-    return 'bg-brand-600';
-  }
-
-  if (faixa === 'ate_30') {
-    return 'bg-brand-700';
-  }
-
-  if (faixa === 'ate_60') {
-    return 'bg-brand-700/80';
-  }
-
-  if (faixa === 'ate_90') {
-    return 'bg-brand-600/70';
-  }
-
-  if (faixa === 'acima_90') {
-    return 'bg-secondary-600/80';
-  }
-
-  return 'bg-border-strong';
 }
 
 export function getCriticidadeBorder(criticidade: Criticidade): string {
   if (criticidade === 'critico') {
-    return 'border-status-critical/24';
+    return 'border-status-critical';
   }
 
   if (criticidade === 'atencao') {
-    return 'border-status-warning/24';
+    return 'border-status-warning';
   }
 
   if (criticidade === 'ok') {
-    return 'border-status-ok/24';
+    return 'border-status-ok';
   }
 
   return 'border-border';

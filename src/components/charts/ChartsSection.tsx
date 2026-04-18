@@ -1,6 +1,5 @@
 import type { FaixaVencimento } from '../../types/contrato';
 import type { Contrato } from '../../types/contrato';
-import type { StatusFiltro } from '../../hooks/useFiltros';
 import { ChartModalidade } from './ChartModalidade';
 import { ChartStatus } from './ChartStatus';
 import { ChartTopEmpresasContratos } from './ChartTopEmpresasContratos';
@@ -9,7 +8,7 @@ import { ChartVencimentos } from './ChartVencimentos';
 
 type ChartsSectionProps = {
   contratos: Contrato[];
-  onSelectStatus: (status: StatusFiltro) => void;
+  onSelectStatus: (status: 'vencido' | 'critico' | 'atencao' | 'ok' | 'sem_status') => void;
   onSelectModalidade: (modalidade: string) => void;
   onSelectFaixa: (faixa: Exclude<FaixaVencimento, null>) => void;
   onSelectEmpresa: (empresa: string) => void;

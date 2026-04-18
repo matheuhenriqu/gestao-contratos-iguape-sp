@@ -51,21 +51,18 @@ export function ContratosMobileList({
   onPageChange,
   onPageSizeChange,
 }: ContratosMobileListProps) {
-  const inicio = totalResultados === 0 ? 0 : (paginaAtual - 1) * itensPorPagina + 1;
-  const fim = Math.min(paginaAtual * itensPorPagina, totalResultados);
   const groups = groupContratosByModalidade(contratos);
 
   return (
-    <section className="grid gap-4 md:hidden">
-      <div className="surface-card flex flex-col gap-3 p-4">
-        <p className="text-[13px] text-muted">
-          Mostrando {formatNumeroInteiro(inicio)} a {formatNumeroInteiro(fim)} de{' '}
-          {formatNumeroInteiro(totalResultados)} contratos.
-        </p>
+    <section className="grid gap-3 md:hidden">
+      <div className="surface-card grid gap-3 p-4">
+        <div className="flex items-center justify-between gap-3">
+          <p className="tnum text-sm font-medium text-text">
+            {formatNumeroInteiro(totalResultados)} contrato{totalResultados === 1 ? '' : 's'}
+          </p>
 
-        <div className="grid gap-3 min-[520px]:grid-cols-2">
-          <label className="flex min-w-0 flex-col gap-2">
-            <span className="field-label">Ordenar por</span>
+          <label className="flex items-center gap-2 text-sm text-text-muted">
+            <span>Ordenar</span>
             <select
               value={`${ordenacao.campo}:${ordenacao.direcao}`}
               onChange={(event) => {
@@ -75,7 +72,7 @@ export function ContratosMobileList({
                 ];
                 onSortChange(campo, direcao);
               }}
-              className="field-base"
+              className="field-base min-h-11 min-w-[168px]"
             >
               {SORT_OPTIONS.map((option) => (
                 <option key={option.value} value={option.value}>
@@ -84,35 +81,35 @@ export function ContratosMobileList({
               ))}
             </select>
           </label>
-
-          <label className="flex min-w-0 flex-col gap-2">
-            <span className="field-label">Por página</span>
-            <select
-              value={itensPorPagina}
-              onChange={(event) => onPageSizeChange(Number(event.target.value))}
-              className="field-base"
-            >
-              {[25, 50, 100].map((value) => (
-                <option key={value} value={value}>
-                  {value}
-                </option>
-              ))}
-            </select>
-          </label>
         </div>
+
+        <label className="flex items-center gap-2 text-sm text-text-muted">
+          <span>Por página</span>
+          <select
+            value={itensPorPagina}
+            onChange={(event) => onPageSizeChange(Number(event.target.value))}
+            className="field-base min-h-11 w-[96px]"
+          >
+            {[25, 50, 100].map((value) => (
+              <option key={value} value={value}>
+                {value}
+              </option>
+            ))}
+          </select>
+        </label>
       </div>
 
       <div className="grid gap-3">
         {groups.map((group) => (
-          <section key={group.key} className="grid gap-3">
-            <div className="flex items-center justify-between rounded-[10px] border border-border bg-surface-2 px-4 py-3">
-              <div className="min-w-0">
-                <p className="field-label">Modalidade</p>
-                <h3 className="truncate text-[14px] font-semibold text-text">{group.label}</h3>
+          <section key={group.key} className="grid gap-2">
+            <div className="rounded-lg border border-border-divider bg-surface-2 px-4 py-3">
+              <p className="section-kicker">Modalidade</p>
+              <div className="mt-1 flex items-center justify-between gap-3">
+                <h3 className="truncate text-base font-semibold text-text">{group.label}</h3>
+                <span className="tnum text-sm text-text-muted">
+                  {formatNumeroInteiro(group.quantidade)}
+                </span>
               </div>
-              <p className="text-[13px] font-medium text-muted">
-                {formatNumeroInteiro(group.quantidade)} contrato{group.quantidade === 1 ? '' : 's'}
-              </p>
             </div>
 
             {group.contratos.map((contrato) => (
@@ -127,55 +124,34 @@ export function ContratosMobileList({
                     onOpenDetail(contrato);
                   }
                 }}
-                className="surface-card focus-ring grid gap-3 p-4"
+                className="grid gap-2 rounded-lg border border-border bg-surface px-3.5 py-3.5 shadow-soft transition hover:border-primary-200 hover:shadow-raised"
               >
-                <div className="flex items-start justify-between gap-3">
-                  <span
-                    className={`inline-flex min-h-6 items-center rounded-full px-2 py-0.5 text-[12px] font-medium ${getStatusClasses(
-                      contrato,
-                    )}`}
-                  >
-                    {getStatusLabel(contrato)}
-                  </span>
-                  <span className={`text-[13px] font-medium ${getCriticidadeTextClass(contrato.criticidade)}`}>
+                <div className="flex items-center justify-between gap-3">
+                  <span className={`status-pill ${getStatusClasses(contrato)}`}>{getStatusLabel(contrato)}</span>
+                  <span className={`text-sm font-medium ${getCriticidadeTextClass(contrato.criticidade)}`}>
                     {formatPrazoCompacto(contrato.diasParaVencimento)}
                   </span>
                 </div>
 
-                <div className="grid gap-1.5">
-                  <h3 className="line-clamp-2 text-[15px] font-medium leading-5 text-text">
-                    {textoOuNaoInformado(contrato.objeto)}
-                  </h3>
-                  <p className="text-[13px] leading-5 text-muted">
-                    {textoOuNaoInformado(contrato.empresaContratada)}
-                  </p>
-                </div>
+                <h3 className="line-clamp-2 text-md font-medium text-text">
+                  {textoOuNaoInformado(contrato.objeto)}
+                </h3>
 
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="min-w-0">
-                    <p className="field-label">Contrato</p>
-                    <p className="truncate text-[13px] font-medium text-text">
-                      Nº {textoOuNaoInformado(contrato.contrato)}
-                    </p>
-                  </div>
-                  <div className="min-w-0 text-right">
-                    <p className="field-label">Vencimento</p>
-                    <p className="truncate text-[13px] font-medium text-text">
-                      {formatDataOuTraco(contrato.dataVencimento)}
-                    </p>
-                  </div>
-                </div>
+                <p className="line-clamp-1 text-sm text-text-muted">
+                  {textoOuNaoInformado(contrato.empresaContratada)}
+                </p>
 
                 <div className="flex items-end justify-between gap-3">
                   <div className="min-w-0">
-                    <p className="field-label">Processo</p>
-                    <p className="truncate text-[13px] text-muted">
-                      {textoOuNaoInformado(contrato.processo)}
+                    <p className="line-clamp-1 text-sm text-text-muted">
+                      Contrato · Nº {textoOuNaoInformado(contrato.contrato)}
+                    </p>
+                    <p className="line-clamp-1 text-sm text-text-muted">
+                      Venc. {formatDataOuTraco(contrato.dataVencimento)}
                     </p>
                   </div>
-                  <p className="tabular-nums text-right text-[16px] font-semibold text-text">
-                    {formatMoedaBRL(contrato.valor)}
-                  </p>
+
+                  <p className="tnum text-md font-semibold text-text">{formatMoedaBRL(contrato.valor)}</p>
                 </div>
               </article>
             ))}
@@ -183,7 +159,7 @@ export function ContratosMobileList({
         ))}
       </div>
 
-      <div className="surface-card p-4">
+      <div className="surface-card flex justify-center p-3">
         <Pagination
           currentPage={paginaAtual}
           totalPages={totalPaginas}
