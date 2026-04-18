@@ -124,6 +124,16 @@ a {
     padding-right: max(16px, var(--safe-right));
   }
 
+  .app-shell > * {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .app-shell * {
+    min-width: 0;
+    max-width: 100%;
+  }
+
   .surface-card {
     background: var(--color-surface);
     border: 1px solid var(--color-border);
