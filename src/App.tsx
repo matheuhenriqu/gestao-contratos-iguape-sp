@@ -83,12 +83,22 @@ function EmptyState({
   action?: React.ReactNode;
 }) {
   return (
-    <div className="grid place-items-center rounded-lg border border-border-divider bg-surface px-4 py-16 text-center">
-      <div className="grid max-w-md gap-3">
-        <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-pill bg-surface-2 text-text-subtle">
-          {icon}
+    <div className="grid place-items-center rounded-xl border border-border-divider bg-surface px-4 py-20 text-center shadow-soft">
+      <div className="grid max-w-md gap-4">
+        <div className="relative mx-auto flex h-16 w-16 items-center justify-center">
+          <span
+            aria-hidden="true"
+            className="absolute inset-0 rounded-pill bg-primary-100 opacity-60"
+          />
+          <span
+            aria-hidden="true"
+            className="absolute inset-2 rounded-pill bg-primary-50"
+          />
+          <div className="relative flex h-10 w-10 items-center justify-center rounded-pill bg-surface text-primary-700 shadow-soft ring-1 ring-primary-200">
+            {icon}
+          </div>
         </div>
-        <h3 className="text-xl font-semibold text-text">{title}</h3>
+        <h3 className="text-xl font-semibold tracking-tight text-text">{title}</h3>
         <p className="text-base text-text-muted">{subtitle}</p>
         {action ? <div className="pt-1">{action}</div> : null}
       </div>
