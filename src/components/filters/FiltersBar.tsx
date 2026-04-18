@@ -324,7 +324,7 @@ export function FiltersBar({
   return (
     <>
       <section className="hidden lg:block">
-        <div className="surface-card flex flex-col gap-3 p-4">
+        <div className="surface-card flex flex-col gap-4 p-5">
           <div className="flex flex-col gap-3 xl:flex-row xl:items-center">
             <SearchField
               value={filtros.busca}
@@ -358,14 +358,17 @@ export function FiltersBar({
           </div>
 
           {desktopExpanded ? (
-            <div id="desktop-filtros-avancados" className="grid gap-4 border-t border-border-divider pt-4">
+            <div
+              id="desktop-filtros-avancados"
+              className="grid gap-4 rounded-lg border border-border-divider bg-surface-2/60 p-4"
+            >
               <AdvancedFilters filtros={filtros} options={options} onFilterChange={onFilterChange} />
             </div>
           ) : null}
 
-          <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+          <div className="flex flex-col gap-3 border-t border-border-divider pt-3 xl:flex-row xl:items-center xl:justify-between">
             <Chips chips={chipsAtivos} />
-            <p role="status" aria-live="polite" className="shrink-0 text-sm text-text-muted">
+            <p role="status" aria-live="polite" className="tnum shrink-0 text-sm text-text-muted">
               {resultLabel}
             </p>
           </div>

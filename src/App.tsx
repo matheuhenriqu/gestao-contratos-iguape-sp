@@ -188,7 +188,7 @@ function App() {
 
       <main
         id="main"
-        className="app-shell grid gap-4 pb-[calc(var(--safe-bottom)+24px)] pt-4 md:gap-6 md:pt-6"
+        className="app-shell grid gap-6 pb-[calc(var(--safe-bottom)+32px)] pt-6 md:gap-8 md:pt-8"
       >
         {isLoading ? (
           <>
@@ -222,8 +222,18 @@ function App() {
           </section>
         ) : (
           <>
-            <section className="grid gap-2">
-              <span className="section-kicker">Painel executivo</span>
+            <section className="grid gap-3">
+              <div className="flex flex-col gap-1">
+                <span className="section-kicker">Painel executivo</span>
+                <div className="flex flex-col gap-1 md:flex-row md:items-baseline md:justify-between md:gap-4">
+                  <h2 className="text-2xl font-semibold tracking-tight text-text">
+                    Visão geral dos contratos
+                  </h2>
+                  <p className="text-sm text-text-muted">
+                    Selecione um indicador para filtrar a base automaticamente.
+                  </p>
+                </div>
+              </div>
               <IndicatorCards metricas={metricas} activeKpi={activeKpi} onSelect={ativarKpi} />
             </section>
 
@@ -298,10 +308,15 @@ function App() {
               )}
             </section>
 
-            <section className="grid gap-2">
+            <section className="grid gap-3">
               <div className="grid gap-1">
                 <span className="section-kicker">Análise visual</span>
-                <h2 className="text-2xl font-semibold text-text">Recortes de gestão</h2>
+                <h2 className="text-2xl font-semibold tracking-tight text-text">
+                  Recortes de gestão
+                </h2>
+                <p className="text-sm text-text-muted">
+                  Distribuições e rankings calculados com base no recorte atual.
+                </p>
               </div>
 
               <Suspense fallback={chartsLoadingFallback}>

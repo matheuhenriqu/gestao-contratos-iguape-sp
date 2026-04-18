@@ -27,33 +27,89 @@ const CARD_CONFIG = [
     key: 'total',
     label: 'Total de contratos',
     icon: DatabaseIcon,
+    tone: 'primary',
   },
   {
     key: 'valor',
     label: 'Valor total',
     icon: WalletIcon,
+    tone: 'secondary',
   },
   {
     key: 'ativos',
     label: 'Ativos',
     icon: CheckCircleIcon,
+    tone: 'success',
   },
   {
     key: 'vencidos',
     label: 'Vencidos',
     icon: AlertCircleIcon,
+    tone: 'danger',
   },
   {
     key: 'proximos',
     label: 'Próximos',
     icon: ClockIcon,
+    tone: 'warning',
   },
   {
     key: 'incompletos',
     label: 'Dados incompletos',
     icon: BuildingIcon,
+    tone: 'neutral',
   },
 ] as const;
+
+type Tone = (typeof CARD_CONFIG)[number]['tone'];
+
+const TONE_STYLES: Record<
+  Tone,
+  { iconBg: string; iconColor: string; accent: string; activeBorder: string; activeRing: string }
+> = {
+  primary: {
+    iconBg: 'bg-primary-100',
+    iconColor: 'text-primary-700',
+    accent: 'bg-primary-600',
+    activeBorder: 'border-primary-600',
+    activeRing: 'ring-primary-200',
+  },
+  secondary: {
+    iconBg: 'bg-[rgba(43,144,148,0.12)]',
+    iconColor: 'text-secondary-700',
+    accent: 'bg-secondary-600',
+    activeBorder: 'border-secondary-600',
+    activeRing: 'ring-[rgba(43,144,148,0.25)]',
+  },
+  success: {
+    iconBg: 'bg-status-okBg',
+    iconColor: 'text-status-ok',
+    accent: 'bg-status-ok',
+    activeBorder: 'border-status-ok',
+    activeRing: 'ring-[rgba(28,122,74,0.18)]',
+  },
+  danger: {
+    iconBg: 'bg-status-criticalBg',
+    iconColor: 'text-status-critical',
+    accent: 'bg-status-critical',
+    activeBorder: 'border-status-critical',
+    activeRing: 'ring-[rgba(180,35,24,0.18)]',
+  },
+  warning: {
+    iconBg: 'bg-status-warningBg',
+    iconColor: 'text-status-warning',
+    accent: 'bg-status-warning',
+    activeBorder: 'border-status-warning',
+    activeRing: 'ring-[rgba(163,93,0,0.18)]',
+  },
+  neutral: {
+    iconBg: 'bg-surface-2',
+    iconColor: 'text-text-muted',
+    accent: 'bg-text-subtle',
+    activeBorder: 'border-text-subtle',
+    activeRing: 'ring-[rgba(107,122,142,0.25)]',
+  },
+};
 
 function getHelper(
   key: IndicatorCardsProps['activeKpi'] | (typeof CARD_CONFIG)[number]['key'],
@@ -86,6 +142,7 @@ function IndicatorCardsComponent({ metricas, activeKpi, onSelect }: IndicatorCar
       {CARD_CONFIG.map((card) => {
         const Icon = card.icon;
         const isActive = activeKpi === card.key;
+        const tone = TONE_STYLES[card.tone];
         const numericValue =
           card.key === 'total'
             ? metricas.totalContratos
@@ -110,29 +167,35 @@ function IndicatorCardsComponent({ metricas, activeKpi, onSelect }: IndicatorCar
             type="button"
             onClick={() => onSelect(card.key)}
             title={card.key === 'valor' ? formatMoedaBRL(metricas.valorTotal) : undefined}
-            className={`relative flex min-h-[132px] flex-col items-start gap-3 overflow-hidden rounded-lg border bg-surface px-4 py-4 text-left transition duration-150 md:px-5 md:py-5 ${
+            className={`group relative flex min-h-[140px] flex-col items-start gap-3 overflow-hidden rounded-xl border bg-surface px-4 py-4 text-left transition-all duration-200 md:px-5 md:py-5 ${
               isActive
-                ? 'border-primary-600 shadow-raised'
-                : 'border-border shadow-soft hover:border-primary-600 hover:shadow-raised'
+                ? `${tone.activeBorder} shadow-raised ring-2 ${tone.activeRing} -translate-y-0.5`
+                : 'border-border shadow-soft hover:-translate-y-0.5 hover:border-border-strong hover:shadow-raised'
             }`}
           >
-            {isActive ? (
-              <span
-                aria-hidden="true"
-                className="absolute inset-y-3 left-0 w-[3px] rounded-r-pill bg-secondary-600"
-              />
-            ) : null}
+            <span
+              aria-hidden="true"
+              className={`absolute left-0 top-0 h-full w-1 ${tone.accent} ${isActive ? 'opacity-100' : 'opacity-0 transition-opacity group-hover:opacity-60'}`}
+            />
 
-            <div className="flex items-center gap-2">
-              <Icon className="h-4 w-4 text-primary-600" />
-              <span className="text-xs font-semibold uppercase tracking-[0.08em] text-text-subtle">
+            <div className="flex w-full items-center justify-between gap-2">
+              <span className="text-[11px] font-semibold uppercase tracking-[0.1em] text-text-subtle">
                 {card.label}
+              </span>
+              <span
+                className={`inline-flex h-9 w-9 items-center justify-center rounded-lg ${tone.iconBg} ${tone.iconColor}`}
+              >
+                <Icon className="h-[18px] w-[18px]" />
               </span>
             </div>
 
-            <span className="tnum text-2xl font-semibold text-text">{value}</span>
+            <span className="tnum text-3xl font-semibold leading-none tracking-tight text-text">
+              {value}
+            </span>
 
-            <span className="text-sm text-text-muted">{getHelper(card.key, metricas)}</span>
+            <span className="text-sm leading-snug text-text-muted">
+              {getHelper(card.key, metricas)}
+            </span>
           </button>
         );
       })}

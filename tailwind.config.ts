@@ -22,9 +22,14 @@ export default {
           500: 'var(--color-secondary-500)',
         },
         accent: {
+          700: 'var(--color-accent-700)',
           600: 'var(--color-accent-600)',
+          500: 'var(--color-accent-500)',
         },
-        bg: 'var(--color-bg)',
+        bg: {
+          DEFAULT: 'var(--color-bg)',
+          accent: 'var(--color-bg-accent)',
+        },
         surface: {
           DEFAULT: 'var(--color-surface)',
           2: 'var(--color-surface-2)',
@@ -72,13 +77,16 @@ export default {
       boxShadow: {
         soft: 'var(--shadow-soft)',
         raised: 'var(--shadow-raised)',
+        elevated: 'var(--shadow-elevated)',
         drawer: 'var(--shadow-drawer)',
+        header: 'var(--shadow-header)',
       },
       borderRadius: {
         sm: 'var(--radius-sm)',
         md: 'var(--radius-md)',
         lg: 'var(--radius-lg)',
         xl: 'var(--radius-xl)',
+        '2xl': 'var(--radius-2xl)',
         pill: 'var(--radius-pill)',
       },
     },
