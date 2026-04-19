@@ -13,7 +13,8 @@ type PaginationProps = {
 };
 
 function controlClass(compact = false) {
-  return `icon-button ${compact ? 'min-h-11 min-w-11' : 'min-h-8 min-w-8 md:min-h-10 md:min-w-10'} disabled:cursor-not-allowed disabled:opacity-40`;
+  const size = compact ? 'h-11 w-11' : 'h-10 w-10';
+  return `icon-button ${size} min-h-0 min-w-0 disabled:cursor-not-allowed disabled:opacity-40`;
 }
 
 export function Pagination({
@@ -51,10 +52,14 @@ export function Pagination({
         <ChevronLeftIcon className="h-4 w-4" />
       </button>
 
-      <span className="tnum inline-flex min-w-[88px] items-center justify-center gap-1 rounded-md border border-border bg-surface px-3 py-1.5 text-sm font-medium text-text">
-        <span className="text-primary-700">{currentPage}</span>
-        <span className="text-text-subtle">/</span>
-        <span className="text-text-muted">{totalPages}</span>
+      <span
+        className="tnum inline-flex min-w-[96px] items-center justify-center gap-1 rounded-md border border-border bg-surface px-3 py-2 text-sm font-medium text-text-muted"
+        aria-live="polite"
+        aria-label={`Página ${currentPage} de ${totalPages}`}
+      >
+        <span className="font-semibold text-primary-700">{currentPage}</span>
+        <span className="text-text-subtle">de</span>
+        <span>{totalPages}</span>
       </span>
 
       <button

@@ -148,7 +148,7 @@ export function ContratosMobileList({
                     onOpenDetail(contrato);
                   }
                 }}
-                className="relative grid gap-2 overflow-hidden rounded-xl border border-border bg-surface px-3.5 py-3.5 pl-4 shadow-soft transition-all hover:-translate-y-0.5 hover:border-primary-200 hover:shadow-raised"
+                className="card-interactive relative grid gap-2 overflow-hidden rounded-xl border border-border bg-surface px-3.5 py-3.5 pl-4 shadow-soft"
               >
                 <span
                   aria-hidden="true"

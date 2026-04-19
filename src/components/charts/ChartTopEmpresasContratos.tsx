@@ -44,8 +44,10 @@ export function ChartTopEmpresasContratos({
 
   return (
     <ChartShell
+      kicker="Ranking por volume"
       title="Top 10 empresas por número de contratos"
       subtitle="Quantidade de contratos por empresa no recorte atual."
+      hint="Clique na empresa"
     >
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={data} layout="vertical" margin={{ top: 4, right: 24, bottom: 4, left: 4 }}>

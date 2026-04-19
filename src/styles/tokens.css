@@ -44,6 +44,10 @@
   --color-status-neutro-bg: #eef2f6;
   --color-status-neutro: #475569;
 
+  --color-hero-ok: #2aa576;
+  --color-hero-warning: #d9963e;
+  --color-hero-critical: #d94a3a;
+
   --shadow-soft: 0 1px 2px rgba(12, 27, 48, 0.04), 0 1px 1px rgba(12, 27, 48, 0.02);
   --shadow-raised: 0 8px 20px -8px rgba(12, 27, 48, 0.14), 0 2px 4px rgba(12, 27, 48, 0.06);
   --shadow-elevated: 0 16px 32px -12px rgba(12, 27, 48, 0.18), 0 4px 8px rgba(12, 27, 48, 0.05);
@@ -62,6 +66,10 @@
   --header-height-mobile: 60px;
   --header-height-desktop: 72px;
   --content-max: 1400px;
+
+  --transition-fast: 160ms;
+  --transition-base: 220ms;
+  --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
 
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-right: env(safe-area-inset-right, 0px);

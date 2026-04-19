@@ -137,6 +137,7 @@ a {
   background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.55) 50%, transparent 100%);
   transform: translateX(-100%);
   animation: shimmer 1.2s linear infinite;
+  will-change: transform;
   content: '';
 }
 
@@ -333,5 +334,29 @@ a {
 
   .skeleton-block {
     @apply rounded-lg bg-surface-3;
+  }
+
+  .card-interactive {
+    transition:
+      transform var(--transition-base) var(--ease-out-soft),
+      box-shadow var(--transition-base) var(--ease-out-soft),
+      border-color var(--transition-base) var(--ease-out-soft);
+  }
+
+  .card-interactive:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-raised);
+    border-color: var(--color-primary-200);
+  }
+
+  .card-interactive:focus-visible {
+    box-shadow: var(--ring);
+    border-color: var(--color-primary-600);
+  }
+
+  .focus-row:focus-visible {
+    outline: 2px solid var(--color-primary-600);
+    outline-offset: -2px;
+    background: var(--color-primary-50);
   }
 }
