@@ -3,6 +3,7 @@ import type { OrdenacaoCampo, OrdenacaoDirecao } from '../../hooks/useFiltros';
 import {
   formatDataOuTraco,
   formatMoedaBRL,
+  formatMoedaCompactaBRL,
   formatNumeroInteiro,
   formatPrazoCompacto,
   textoOuNaoInformado,
@@ -100,22 +101,39 @@ export function ContratosMobileList({
         </label>
       </div>
 
-      <div className="grid gap-3">
+      <div className="grid gap-4">
         {groups.map((group) => (
-          <section key={group.key} className="grid gap-2">
-            <div className="flex items-center justify-between gap-3 rounded-lg border border-primary-200 bg-primary-50 px-4 py-2.5">
-              <div className="flex items-center gap-2.5">
-                <span aria-hidden="true" className="h-5 w-1 rounded-pill bg-primary-600" />
-                <div>
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-primary-800/80">
-                    Modalidade
-                  </p>
-                  <h3 className="truncate text-sm font-semibold text-primary-900">{group.label}</h3>
+          <section key={group.key} className="grid gap-2.5">
+            <div className="overflow-hidden rounded-xl border border-primary-200 bg-primary-50 shadow-soft">
+              <div className="flex items-start justify-between gap-3 px-4 py-3">
+                <div className="flex min-w-0 items-start gap-2.5">
+                  <span aria-hidden="true" className="mt-1 h-5 w-1 shrink-0 rounded-pill bg-primary-600" />
+                  <div className="min-w-0">
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-primary-800/80">
+                      Modalidade
+                    </p>
+                    <h3 className="truncate text-sm font-semibold text-primary-950">{group.label}</h3>
+                  </div>
                 </div>
+                <span className="tnum inline-flex shrink-0 items-center rounded-pill bg-surface px-2 py-0.5 text-xs font-semibold text-primary-800 ring-1 ring-primary-200">
+                  {formatNumeroInteiro(group.quantidade)}
+                </span>
               </div>
-              <span className="tnum inline-flex items-center rounded-pill bg-surface px-2 py-0.5 text-xs font-semibold text-primary-800 ring-1 ring-primary-200">
-                {formatNumeroInteiro(group.quantidade)}
-              </span>
+              <div className="flex flex-wrap items-center gap-2 border-t border-primary-200/70 bg-primary-50/60 px-4 py-2 text-[11px] font-medium text-primary-800">
+                <span className="tnum inline-flex items-center gap-1.5">
+                  <span aria-hidden="true" className="inline-block h-1.5 w-1.5 rounded-pill bg-primary-600" />
+                  {formatNumeroInteiro(group.quantidade)} contrato{group.quantidade === 1 ? '' : 's'}
+                </span>
+                {group.possuiValorInformado ? (
+                  <span
+                    className="tnum inline-flex items-center gap-1.5"
+                    title={formatMoedaBRL(group.valorTotal)}
+                  >
+                    <span aria-hidden="true" className="inline-block h-1.5 w-1.5 rounded-pill bg-secondary-600" />
+                    {formatMoedaCompactaBRL(group.valorTotal)}
+                  </span>
+                ) : null}
+              </div>
             </div>
 
             {group.contratos.map((contrato) => (
