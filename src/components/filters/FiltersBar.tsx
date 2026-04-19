@@ -200,62 +200,64 @@ function AdvancedFilters({
   onFilterChange: FiltersBarProps['onFilterChange'];
 }) {
   return (
-    <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-4">
-      <SelectField
-        label="Status"
-        value={filtros.status}
-        onChange={(value) => onFilterChange('status', value as StatusFiltro)}
-      >
-        {STATUS_OPTIONS.map((option) => (
-          <option key={option.value} value={option.value}>
-            {option.label}
-          </option>
-        ))}
-      </SelectField>
+    <div className="grid gap-5">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3">
+        <SelectField
+          label="Status"
+          value={filtros.status}
+          onChange={(value) => onFilterChange('status', value as StatusFiltro)}
+        >
+          {STATUS_OPTIONS.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </SelectField>
 
-      <OptionSelect
-        label="Modalidade"
-        value={filtros.modalidade}
-        options={options.modalidades}
-        onChange={(value) => onFilterChange('modalidade', value)}
-      />
+        <SelectField
+          label="Faixa de vencimento"
+          value={filtros.faixaVencimento}
+          onChange={(value) =>
+            onFilterChange('faixaVencimento', value as Exclude<FaixaVencimento, null> | 'todos')
+          }
+        >
+          {FAIXA_VENCIMENTO_OPTIONS.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </SelectField>
 
-      <OptionSelect
-        label="Empresa contratada"
-        value={filtros.empresaContratada}
-        options={options.empresas}
-        onChange={(value) => onFilterChange('empresaContratada', value)}
-      />
+        <OptionSelect
+          label="Modalidade"
+          value={filtros.modalidade}
+          options={options.modalidades}
+          onChange={(value) => onFilterChange('modalidade', value)}
+        />
 
-      <OptionSelect
-        label="Gestor"
-        value={filtros.gestor}
-        options={options.gestores}
-        onChange={(value) => onFilterChange('gestor', value)}
-      />
+        <OptionSelect
+          label="Empresa contratada"
+          value={filtros.empresaContratada}
+          options={options.empresas}
+          onChange={(value) => onFilterChange('empresaContratada', value)}
+        />
 
-      <OptionSelect
-        label="Fiscal"
-        value={filtros.fiscal}
-        options={options.fiscais}
-        onChange={(value) => onFilterChange('fiscal', value)}
-      />
+        <OptionSelect
+          label="Gestor"
+          value={filtros.gestor}
+          options={options.gestores}
+          onChange={(value) => onFilterChange('gestor', value)}
+        />
 
-      <SelectField
-        label="Faixa de vencimento"
-        value={filtros.faixaVencimento}
-        onChange={(value) =>
-          onFilterChange('faixaVencimento', value as Exclude<FaixaVencimento, null> | 'todos')
-        }
-      >
-        {FAIXA_VENCIMENTO_OPTIONS.map((option) => (
-          <option key={option.value} value={option.value}>
-            {option.label}
-          </option>
-        ))}
-      </SelectField>
+        <OptionSelect
+          label="Fiscal"
+          value={filtros.fiscal}
+          options={options.fiscais}
+          onChange={(value) => onFilterChange('fiscal', value)}
+        />
+      </div>
 
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         <label className="grid gap-2">
           <span className="field-label">Valor mínimo</span>
           <input
@@ -277,15 +279,15 @@ function AdvancedFilters({
             className="field-base"
           />
         </label>
-      </div>
 
-      <div className="grid gap-2">
-        <span className="field-label">Pendência de dados</span>
-        <ToggleField
-          label="Apenas contratos pendentes"
-          checked={filtros.apenasDadosIncompletos}
-          onChange={(checked) => onFilterChange('apenasDadosIncompletos', checked)}
-        />
+        <div className="grid gap-2">
+          <span className="field-label">Pendência de dados</span>
+          <ToggleField
+            label="Apenas contratos pendentes"
+            checked={filtros.apenasDadosIncompletos}
+            onChange={(checked) => onFilterChange('apenasDadosIncompletos', checked)}
+          />
+        </div>
       </div>
     </div>
   );

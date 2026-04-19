@@ -47,8 +47,10 @@ export function ChartTopEmpresasValor({ contratos, onSelectEmpresa }: ChartTopEm
 
   return (
     <ChartShell
+      kicker="Ranking financeiro"
       title="Top 10 empresas por valor contratado"
       subtitle="Volume financeiro acumulado por empresa no recorte atual."
+      hint="Clique na empresa"
     >
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={data} layout="vertical" margin={{ top: 4, right: 36, bottom: 4, left: 4 }}>

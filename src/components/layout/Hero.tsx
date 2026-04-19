@@ -68,10 +68,14 @@ export function Hero({
   const pctOutros = Math.max(0, 100 - pctAtivos - pctProximos - pctVencidos);
 
   const legendItems = [
-    { label: 'Ativos', value: ativos, color: 'bg-[#2aa576]' },
-    { label: 'Próximos 30d', value: proximosDoVencimento, color: 'bg-[#d9963e]' },
-    { label: 'Vencidos', value: vencidos, color: 'bg-[#d94a3a]' },
-    { label: 'Outros', value: Math.max(0, totalContratos - ativos - proximosDoVencimento - vencidos), color: 'bg-white/30' },
+    { label: 'Ativos', value: ativos, color: 'var(--color-hero-ok)' },
+    { label: 'Próximos 30d', value: proximosDoVencimento, color: 'var(--color-hero-warning)' },
+    { label: 'Vencidos', value: vencidos, color: 'var(--color-hero-critical)' },
+    {
+      label: 'Outros',
+      value: Math.max(0, totalContratos - ativos - proximosDoVencimento - vencidos),
+      color: 'rgba(255,255,255,.3)',
+    },
   ];
 
   return (
@@ -168,10 +172,22 @@ export function Hero({
                 role="img"
                 aria-label="Barra de proporção por situação"
               >
-                <span className="h-full bg-[#2aa576]" style={{ width: `${pctAtivos}%` }} />
-                <span className="h-full bg-[#d9963e]" style={{ width: `${pctProximos}%` }} />
-                <span className="h-full bg-[#d94a3a]" style={{ width: `${pctVencidos}%` }} />
-                <span className="h-full bg-white/25" style={{ width: `${pctOutros}%` }} />
+                <span
+                  className="h-full"
+                  style={{ width: `${pctAtivos}%`, background: 'var(--color-hero-ok)' }}
+                />
+                <span
+                  className="h-full"
+                  style={{ width: `${pctProximos}%`, background: 'var(--color-hero-warning)' }}
+                />
+                <span
+                  className="h-full"
+                  style={{ width: `${pctVencidos}%`, background: 'var(--color-hero-critical)' }}
+                />
+                <span
+                  className="h-full"
+                  style={{ width: `${pctOutros}%`, background: 'rgba(255,255,255,.25)' }}
+                />
               </div>
 
               <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 pt-1">
@@ -181,7 +197,11 @@ export function Hero({
                     className="inline-flex items-center gap-2 text-[11px] font-medium"
                     style={{ color: 'rgba(255,255,255,.78)' }}
                   >
-                    <span aria-hidden="true" className={`inline-block h-2 w-2 rounded-pill ${item.color}`} />
+                    <span
+                      aria-hidden="true"
+                      className="inline-block h-2 w-2 rounded-pill"
+                      style={{ background: item.color }}
+                    />
                     <span>{item.label}</span>
                     <span className="tnum" style={{ color: 'rgba(255,255,255,.58)' }}>
                       {formatNumeroInteiro(item.value)}

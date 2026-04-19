@@ -225,6 +225,8 @@ export function ContratosTable({
                     <Fragment key={contrato.id}>
                       <tr
                         tabIndex={0}
+                        role="button"
+                        aria-label={`Abrir detalhes do contrato ${textoOuNaoInformado(contrato.contrato)}`}
                         onClick={() => onOpenDetail(contrato)}
                         onKeyDown={(event) => {
                           if (event.key === 'Enter' || event.key === ' ') {
@@ -232,9 +234,9 @@ export function ContratosTable({
                             onOpenDetail(contrato);
                           }
                         }}
-                        className={`transition ${
+                        className={`focus-row cursor-pointer outline-none transition hover:bg-primary-50 ${
                           index % 2 === 0 ? 'bg-surface' : 'bg-[rgba(238,242,246,.5)]'
-                        } hover:cursor-pointer hover:bg-primary-50 focus-visible:bg-primary-50`}
+                        }`}
                       >
                         <td
                           className={`border-b border-border-divider pl-4 pr-3 align-middle ${rowPadding}`}

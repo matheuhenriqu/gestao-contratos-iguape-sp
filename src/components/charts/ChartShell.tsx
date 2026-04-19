@@ -17,7 +17,7 @@ export function ChartShell({
 }: ChartShellProps) {
   return (
     <article
-      className="surface-card group grid gap-4 p-5 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-raised md:p-6"
+      className="surface-card card-interactive group grid gap-4 p-5 md:p-6"
       style={{ contentVisibility: 'auto', containIntrinsicSize: '320px' }}
     >
       <header className="grid gap-2 border-b border-border-divider pb-4">

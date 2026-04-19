@@ -201,10 +201,10 @@ function IndicatorCardsComponent({ metricas, activeKpi, onSelect }: IndicatorCar
             type="button"
             onClick={() => onSelect(card.key)}
             title={card.key === 'valor' ? formatMoedaBRL(metricas.valorTotal) : undefined}
-            className={`group relative flex min-h-[148px] flex-col items-start gap-3 overflow-hidden rounded-xl border bg-surface px-4 py-4 text-left transition-all duration-200 md:px-5 md:py-5 ${
+            className={`card-interactive group relative flex min-h-[148px] flex-col items-start gap-3 overflow-hidden rounded-xl border bg-surface px-4 py-4 text-left md:px-5 md:py-5 ${
               isActive
                 ? `${tone.activeBorder} shadow-raised ring-2 ${tone.activeRing} -translate-y-0.5`
-                : 'border-border shadow-soft hover:-translate-y-0.5 hover:border-border-strong hover:shadow-raised'
+                : 'border-border shadow-soft'
             }`}
           >
             <span

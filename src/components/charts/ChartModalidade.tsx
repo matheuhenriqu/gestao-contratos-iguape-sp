@@ -41,8 +41,10 @@ export function ChartModalidade({ contratos, onSelectModalidade }: ChartModalida
 
   return (
     <ChartShell
+      kicker="Distribuição por natureza"
       title="Contratos por modalidade"
       subtitle="Frequência de modalidades no recorte filtrado."
+      hint="Clique nas barras"
     >
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={data} layout="vertical" margin={{ top: 4, right: 22, bottom: 4, left: 4 }}>

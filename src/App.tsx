@@ -257,8 +257,8 @@ function App() {
             />
           </section>
         ) : (
-          <>
-            <section className="grid gap-4 fade-in">
+          <div className="grid gap-6 md:gap-8 fade-in">
+            <section className="grid gap-4">
               <SectionHeader
                 kicker="Painel executivo"
                 title="Visão geral dos contratos"
@@ -365,7 +365,7 @@ function App() {
                 />
               </Suspense>
             </section>
-          </>
+          </div>
         )}
       </main>
 
