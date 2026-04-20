@@ -1,4 +1,4 @@
-import { Fragment } from 'react';
+import { Fragment, useEffect, useMemo, useState } from 'react';
 import type { Contrato } from '../../types/contrato';
 import type { OrdenacaoCampo } from '../../hooks/useFiltros';
 import {
@@ -16,8 +16,11 @@ import {
   getStatusLabel,
 } from '../shared/contratoAppearance';
 import { Pagination } from '../shared/Pagination';
-import { ArrowUpDownIcon } from '../shared/icons';
-import { groupContratosByModalidade } from '../shared/groupContratosByModalidade';
+import { ArrowUpDownIcon, ChevronDownIcon } from '../shared/icons';
+import {
+  groupContratosByModalidade,
+  type ContratoModalidadeGroup,
+} from '../shared/groupContratosByModalidade';
 
 type ContratosTableProps = {
   contratos: Contrato[];
@@ -94,6 +97,100 @@ function SortButton({
   );
 }
 
+function GroupHeader({
+  group,
+  expanded,
+  onToggle,
+  panelId,
+}: {
+  group: ContratoModalidadeGroup;
+  expanded: boolean;
+  onToggle: () => void;
+  panelId: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onToggle}
+      aria-expanded={expanded}
+      aria-controls={panelId}
+      className={`group relative flex w-full items-center justify-between gap-4 px-5 py-4 text-left transition-colors ${
+        expanded ? 'bg-primary-50/70' : 'bg-surface hover:bg-primary-50/40'
+      }`}
+    >
+      <span
+        aria-hidden="true"
+        className={`absolute left-0 top-0 h-full w-1 rounded-l-xl transition-opacity ${
+          expanded ? 'bg-primary-600 opacity-100' : 'bg-primary-600 opacity-40 group-hover:opacity-70'
+        }`}
+      />
+
+      <span className="flex min-w-0 items-center gap-3">
+        <span
+          aria-hidden="true"
+          className={`tnum inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-xs font-semibold tracking-[0.04em] transition-colors ${
+            expanded
+              ? 'bg-primary-600 text-text-inverse'
+              : 'bg-primary-100 text-primary-800 group-hover:bg-primary-200'
+          }`}
+        >
+          {group.abbreviation}
+        </span>
+        <span className="min-w-0">
+          <span className="block truncate text-base font-semibold tracking-tight text-primary-950 md:text-[17px]">
+            {group.label}
+          </span>
+          <span className="block text-[11px] font-medium uppercase tracking-[0.1em] text-text-subtle">
+            Modalidade
+          </span>
+        </span>
+      </span>
+
+      <span className="flex shrink-0 items-center gap-3">
+        <span className="tnum hidden items-center gap-2 text-sm font-medium text-text-muted sm:inline-flex">
+          <span>
+            {formatNumeroInteiro(group.quantidade)} contrato{group.quantidade === 1 ? '' : 's'}
+          </span>
+          {group.possuiValorInformado ? (
+            <>
+              <span aria-hidden="true" className="text-text-subtle">
+                ·
+              </span>
+              <span
+                className="font-semibold text-text"
+                title={formatMoedaBRL(group.valorTotal)}
+              >
+                {formatMoedaCompactaBRL(group.valorTotal)}
+              </span>
+            </>
+          ) : null}
+        </span>
+
+        <span className="tnum inline-flex items-center gap-1 text-xs font-semibold text-text-muted sm:hidden">
+          {formatNumeroInteiro(group.quantidade)}
+          {group.possuiValorInformado ? (
+            <>
+              <span aria-hidden="true" className="text-text-subtle">
+                ·
+              </span>
+              {formatMoedaCompactaBRL(group.valorTotal)}
+            </>
+          ) : null}
+        </span>
+
+        <span
+          aria-hidden="true"
+          className={`inline-flex h-8 w-8 items-center justify-center rounded-md text-text-muted transition-transform duration-200 group-hover:text-primary-700 ${
+            expanded ? 'rotate-180' : 'rotate-0'
+          }`}
+        >
+          <ChevronDownIcon className="h-4 w-4" />
+        </span>
+      </span>
+    </button>
+  );
+}
+
 export function ContratosTable({
   contratos,
   totalResultados,
@@ -112,6 +209,36 @@ export function ContratosTable({
   const fim = Math.min(paginaAtual * itensPorPagina, totalResultados);
   const groups = groupContratosByModalidade(contratos);
   const rowPadding = compactMode ? 'py-2.5' : 'py-3.5';
+  const groupKeys = useMemo(() => groups.map((group) => group.key).join('|'), [groups]);
+
+  const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
+
+  useEffect(() => {
+    setCollapsed((current) => {
+      const next: Record<string, boolean> = {};
+      for (const group of groups) {
+        next[group.key] = current[group.key] ?? false;
+      }
+      return next;
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [groupKeys]);
+
+  const totalCollapsed = groups.filter((group) => collapsed[group.key]).length;
+  const allCollapsed = groups.length > 0 && totalCollapsed === groups.length;
+
+  function toggleGroup(key: string) {
+    setCollapsed((current) => ({ ...current, [key]: !current[key] }));
+  }
+
+  function toggleAll() {
+    const target = !allCollapsed;
+    const next: Record<string, boolean> = {};
+    for (const group of groups) {
+      next[group.key] = target;
+    }
+    setCollapsed(next);
+  }
 
   return (
     <section className="hidden md:block">
@@ -119,7 +246,7 @@ export function ContratosTable({
         <div className="grid gap-0.5">
           <p className="section-kicker">Por modalidade</p>
           <p className="text-sm text-text-muted">
-            Cada modalidade é apresentada como um bloco independente, com contagem e valor consolidado.
+            Cada modalidade é apresentada como um bloco independente. Clique no cabeçalho para expandir ou recolher.
           </p>
         </div>
 
@@ -129,6 +256,12 @@ export function ContratosTable({
               <span aria-hidden="true" className="inline-block h-1.5 w-1.5 rounded-pill bg-primary-600" />
               {formatNumeroInteiro(groups.length)} modalidade{groups.length === 1 ? '' : 's'} nesta página
             </span>
+          ) : null}
+
+          {groups.length > 1 ? (
+            <button type="button" onClick={toggleAll} className="button-secondary shrink-0">
+              {allCollapsed ? 'Expandir todas' : 'Recolher todas'}
+            </button>
           ) : null}
 
           <button type="button" onClick={onToggleCompactMode} className="button-secondary shrink-0">
@@ -149,10 +282,18 @@ export function ContratosTable({
             <a
               key={group.key}
               href={`#${modalidadeAnchor(group.key)}`}
-              className="group inline-flex shrink-0 items-center gap-2 rounded-pill border border-border bg-surface px-3 py-1 text-xs font-medium text-text-muted transition hover:border-primary-300 hover:bg-primary-50 hover:text-primary-800"
+              onClick={() => {
+                if (collapsed[group.key]) {
+                  setCollapsed((current) => ({ ...current, [group.key]: false }));
+                }
+              }}
+              className="group inline-flex shrink-0 items-center gap-2 rounded-pill border border-border bg-surface px-2.5 py-1 text-xs font-medium text-text-muted transition hover:border-primary-300 hover:bg-primary-50 hover:text-primary-800"
             >
-              <span className="truncate max-w-[200px]">{group.label}</span>
-              <span className="tnum inline-flex items-center rounded-pill bg-surface-2 px-1.5 py-0.5 text-[10px] font-semibold text-text-subtle group-hover:bg-primary-100 group-hover:text-primary-800">
+              <span className="tnum inline-flex h-5 w-5 items-center justify-center rounded-pill bg-primary-100 text-[10px] font-semibold text-primary-800 group-hover:bg-primary-600 group-hover:text-text-inverse">
+                {group.abbreviation}
+              </span>
+              <span className="truncate max-w-[180px]">{group.label}</span>
+              <span className="tnum text-[10px] font-semibold text-text-subtle">
                 {formatNumeroInteiro(group.quantidade)}
               </span>
             </a>
@@ -160,158 +301,176 @@ export function ContratosTable({
         </nav>
       ) : null}
 
-      <div className="grid gap-5">
-        {groups.map((group) => (
-          <article
-            key={group.key}
-            id={modalidadeAnchor(group.key)}
-            className="overflow-hidden rounded-xl border border-border bg-surface shadow-soft scroll-mt-24"
-          >
-            <header className="flex flex-col gap-3 border-b border-border-divider bg-primary-50/60 px-5 py-4 md:flex-row md:items-center md:justify-between">
-              <div className="flex min-w-0 items-center gap-3">
-                <span aria-hidden="true" className="h-10 w-1.5 shrink-0 rounded-pill bg-primary-600" />
-                <div className="min-w-0">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-primary-700">
-                    Modalidade
-                  </p>
-                  <h3 className="truncate text-lg font-semibold tracking-tight text-primary-950">
-                    {group.label}
-                  </h3>
-                </div>
-              </div>
+      <div className="grid gap-4">
+        {groups.map((group) => {
+          const isExpanded = !collapsed[group.key];
+          const panelId = `${modalidadeAnchor(group.key)}-panel`;
 
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="tnum inline-flex items-center gap-1.5 rounded-pill border border-primary-200 bg-surface px-3 py-1 text-xs font-semibold text-primary-800">
-                  <span aria-hidden="true" className="inline-block h-1.5 w-1.5 rounded-pill bg-primary-600" />
-                  {formatNumeroInteiro(group.quantidade)} contrato{group.quantidade === 1 ? '' : 's'}
-                </span>
-                {group.possuiValorInformado ? (
-                  <span
-                    className="tnum inline-flex items-center gap-1.5 rounded-pill border border-secondary-500/40 bg-[rgba(43,144,148,0.08)] px-3 py-1 text-xs font-semibold text-secondary-700"
-                    title={formatMoedaBRL(group.valorTotal)}
-                  >
-                    <span aria-hidden="true" className="inline-block h-1.5 w-1.5 rounded-pill bg-secondary-600" />
-                    {formatMoedaCompactaBRL(group.valorTotal)}
-                  </span>
-                ) : null}
-              </div>
-            </header>
+          return (
+            <article
+              key={group.key}
+              id={modalidadeAnchor(group.key)}
+              className="overflow-hidden rounded-xl border border-border bg-surface shadow-soft scroll-mt-24"
+            >
+              <GroupHeader
+                group={group}
+                expanded={isExpanded}
+                onToggle={() => toggleGroup(group.key)}
+                panelId={panelId}
+              />
 
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[2000px] border-separate border-spacing-0">
-                <thead>
-                  <tr>
-                    {COLUMNS.map((column) => (
-                      <th
-                        key={column.key}
-                        scope="col"
-                        style={{ minWidth: column.minWidth }}
-                        className="border-b border-border-strong bg-surface-2 px-3 py-3 first:pl-4 last:pr-4"
-                      >
-                        <SortButton
-                          label={column.label}
-                          field={column.key}
-                          ordenacao={ordenacao}
-                          onSort={onSort}
-                          {...(column.align ? { align: column.align } : {})}
-                        />
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-
-                <tbody>
-                  {group.contratos.map((contrato, index) => (
-                    <Fragment key={contrato.id}>
-                      <tr
-                        tabIndex={0}
-                        role="button"
-                        aria-label={`Abrir detalhes do contrato ${textoOuNaoInformado(contrato.contrato)}`}
-                        onClick={() => onOpenDetail(contrato)}
-                        onKeyDown={(event) => {
-                          if (event.key === 'Enter' || event.key === ' ') {
-                            event.preventDefault();
-                            onOpenDetail(contrato);
-                          }
-                        }}
-                        className={`focus-row cursor-pointer outline-none transition hover:bg-primary-50 ${
-                          index % 2 === 0 ? 'bg-surface' : 'bg-[rgba(238,242,246,.5)]'
-                        }`}
-                      >
-                        <td
-                          className={`border-b border-border-divider pl-4 pr-3 align-middle ${rowPadding}`}
-                          style={{ boxShadow: `inset 3px 0 0 0 ${getCriticidadeAccentColor(contrato.criticidade)}` }}
-                        >
-                          <span className={`status-pill ${getStatusClasses(contrato)}`}>{getStatusLabel(contrato)}</span>
-                        </td>
-
-                        <td className={`border-b border-border-divider px-3 align-middle ${rowPadding}`}>
-                          <span className="block truncate text-sm text-text" title={textoOuNaoInformado(contrato.numeroModalidade)}>
-                            {textoOuNaoInformado(contrato.numeroModalidade)}
-                          </span>
-                        </td>
-
-                        <td className={`border-b border-border-divider px-3 align-middle ${rowPadding}`}>
-                          <span className="block truncate text-sm font-medium text-text" title={textoOuNaoInformado(contrato.contrato)}>
-                            {textoOuNaoInformado(contrato.contrato)}
-                          </span>
-                        </td>
-
-                        <td className={`border-b border-border-divider px-3 align-middle ${rowPadding}`}>
-                          <span className="block truncate text-sm text-text" title={textoOuNaoInformado(contrato.processo)}>
-                            {textoOuNaoInformado(contrato.processo)}
-                          </span>
-                        </td>
-
-                        <td className={`border-b border-border-divider px-3 align-middle ${rowPadding}`}>
-                          <span className="line-clamp-2 text-sm leading-5 text-text" title={textoOuNaoInformado(contrato.objeto)}>
-                            {textoOuNaoInformado(contrato.objeto)}
-                          </span>
-                        </td>
-
-                        <td className={`border-b border-border-divider px-3 align-middle ${rowPadding}`}>
-                          <span className="block truncate text-sm text-text" title={textoOuNaoInformado(contrato.empresaContratada)}>
-                            {textoOuNaoInformado(contrato.empresaContratada)}
-                          </span>
-                        </td>
-
-                        <td className={`tnum border-b border-border-divider px-3 text-right align-middle ${rowPadding}`}>
-                          <span className="text-sm font-medium text-text">{formatMoedaBRL(contrato.valor)}</span>
-                        </td>
-
-                        <td className={`tnum border-b border-border-divider px-3 align-middle ${rowPadding}`}>
-                          <span className="text-sm text-text">{formatDataOuTraco(contrato.dataInicio)}</span>
-                        </td>
-
-                        <td className={`tnum border-b border-border-divider px-3 align-middle ${rowPadding}`}>
-                          <span className="text-sm text-text">{formatDataOuTraco(contrato.dataVencimento)}</span>
-                        </td>
-
-                        <td className={`tnum border-b border-border-divider px-3 text-right align-middle ${rowPadding}`}>
-                          <span className={`text-sm font-medium ${getCriticidadeTextClass(contrato.criticidade)}`}>
-                            {formatDiasParaVencimento(contrato.diasParaVencimento)}
-                          </span>
-                        </td>
-
-                        <td className={`border-b border-border-divider px-3 align-middle ${rowPadding}`}>
-                          <span className="block truncate text-sm text-text" title={textoOuNaoInformado(contrato.gestor)}>
-                            {textoOuNaoInformado(contrato.gestor)}
-                          </span>
-                        </td>
-
-                        <td className={`border-b border-border-divider px-3 align-middle last:pr-4 ${rowPadding}`}>
-                          <span className="block truncate text-sm text-text" title={textoOuNaoInformado(contrato.fiscal)}>
-                            {textoOuNaoInformado(contrato.fiscal)}
-                          </span>
-                        </td>
+              {isExpanded ? (
+                <div
+                  id={panelId}
+                  className="overflow-x-auto border-t border-border-divider fade-in"
+                >
+                  <table className="w-full min-w-[2000px] border-separate border-spacing-0">
+                    <thead>
+                      <tr>
+                        {COLUMNS.map((column) => (
+                          <th
+                            key={column.key}
+                            scope="col"
+                            style={{ minWidth: column.minWidth }}
+                            className="border-b border-border-strong bg-surface-2 px-3 py-3 first:pl-4 last:pr-4"
+                          >
+                            <SortButton
+                              label={column.label}
+                              field={column.key}
+                              ordenacao={ordenacao}
+                              onSort={onSort}
+                              {...(column.align ? { align: column.align } : {})}
+                            />
+                          </th>
+                        ))}
                       </tr>
-                    </Fragment>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </article>
-        ))}
+                    </thead>
+
+                    <tbody>
+                      {group.contratos.map((contrato, index) => (
+                        <Fragment key={contrato.id}>
+                          <tr
+                            tabIndex={0}
+                            role="button"
+                            aria-label={`Abrir detalhes do contrato ${textoOuNaoInformado(contrato.contrato)}`}
+                            onClick={() => onOpenDetail(contrato)}
+                            onKeyDown={(event) => {
+                              if (event.key === 'Enter' || event.key === ' ') {
+                                event.preventDefault();
+                                onOpenDetail(contrato);
+                              }
+                            }}
+                            className={`focus-row cursor-pointer outline-none transition hover:bg-primary-50 ${
+                              index % 2 === 0 ? 'bg-surface' : 'bg-[rgba(238,242,246,.5)]'
+                            }`}
+                          >
+                            <td
+                              className={`border-b border-border-divider pl-4 pr-3 align-middle ${rowPadding}`}
+                              style={{
+                                boxShadow: `inset 3px 0 0 0 ${getCriticidadeAccentColor(contrato.criticidade)}`,
+                              }}
+                            >
+                              <span className={`status-pill ${getStatusClasses(contrato)}`}>
+                                {getStatusLabel(contrato)}
+                              </span>
+                            </td>
+
+                            <td className={`border-b border-border-divider px-3 align-middle ${rowPadding}`}>
+                              <span
+                                className="block truncate text-sm text-text"
+                                title={textoOuNaoInformado(contrato.numeroModalidade)}
+                              >
+                                {textoOuNaoInformado(contrato.numeroModalidade)}
+                              </span>
+                            </td>
+
+                            <td className={`border-b border-border-divider px-3 align-middle ${rowPadding}`}>
+                              <span
+                                className="block truncate text-sm font-medium text-text"
+                                title={textoOuNaoInformado(contrato.contrato)}
+                              >
+                                {textoOuNaoInformado(contrato.contrato)}
+                              </span>
+                            </td>
+
+                            <td className={`border-b border-border-divider px-3 align-middle ${rowPadding}`}>
+                              <span
+                                className="block truncate text-sm text-text"
+                                title={textoOuNaoInformado(contrato.processo)}
+                              >
+                                {textoOuNaoInformado(contrato.processo)}
+                              </span>
+                            </td>
+
+                            <td className={`border-b border-border-divider px-3 align-middle ${rowPadding}`}>
+                              <span
+                                className="line-clamp-2 text-sm leading-5 text-text"
+                                title={textoOuNaoInformado(contrato.objeto)}
+                              >
+                                {textoOuNaoInformado(contrato.objeto)}
+                              </span>
+                            </td>
+
+                            <td className={`border-b border-border-divider px-3 align-middle ${rowPadding}`}>
+                              <span
+                                className="block truncate text-sm text-text"
+                                title={textoOuNaoInformado(contrato.empresaContratada)}
+                              >
+                                {textoOuNaoInformado(contrato.empresaContratada)}
+                              </span>
+                            </td>
+
+                            <td
+                              className={`tnum border-b border-border-divider px-3 text-right align-middle ${rowPadding}`}
+                            >
+                              <span className="text-sm font-medium text-text">{formatMoedaBRL(contrato.valor)}</span>
+                            </td>
+
+                            <td className={`tnum border-b border-border-divider px-3 align-middle ${rowPadding}`}>
+                              <span className="text-sm text-text">{formatDataOuTraco(contrato.dataInicio)}</span>
+                            </td>
+
+                            <td className={`tnum border-b border-border-divider px-3 align-middle ${rowPadding}`}>
+                              <span className="text-sm text-text">{formatDataOuTraco(contrato.dataVencimento)}</span>
+                            </td>
+
+                            <td
+                              className={`tnum border-b border-border-divider px-3 text-right align-middle ${rowPadding}`}
+                            >
+                              <span className={`text-sm font-medium ${getCriticidadeTextClass(contrato.criticidade)}`}>
+                                {formatDiasParaVencimento(contrato.diasParaVencimento)}
+                              </span>
+                            </td>
+
+                            <td className={`border-b border-border-divider px-3 align-middle ${rowPadding}`}>
+                              <span
+                                className="block truncate text-sm text-text"
+                                title={textoOuNaoInformado(contrato.gestor)}
+                              >
+                                {textoOuNaoInformado(contrato.gestor)}
+                              </span>
+                            </td>
+
+                            <td
+                              className={`border-b border-border-divider px-3 align-middle last:pr-4 ${rowPadding}`}
+                            >
+                              <span
+                                className="block truncate text-sm text-text"
+                                title={textoOuNaoInformado(contrato.fiscal)}
+                              >
+                                {textoOuNaoInformado(contrato.fiscal)}
+                              </span>
+                            </td>
+                          </tr>
+                        </Fragment>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : null}
+            </article>
+          );
+        })}
       </div>
 
       <div className="mt-4 flex flex-col gap-3 rounded-xl border border-border bg-surface px-4 py-3 shadow-soft lg:flex-row lg:items-center lg:justify-between lg:px-5">
