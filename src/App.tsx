@@ -120,6 +120,10 @@ function App() {
     totalPaginas,
     totalResultados,
     pagina,
+    paginaAtualVencidos,
+    totalPaginasVencidos,
+    totalResultadosVencidos,
+    paginaVencidos,
     contratosFiltrados,
     metricas,
     filtrosAtivos,
@@ -130,6 +134,7 @@ function App() {
     alternarOrdenacao,
     definirOrdenacao,
     definirPagina,
+    definirPaginaVencidos,
     definirItensPorPagina,
     ativarKpi,
   } = useFiltros(contratos);
@@ -138,6 +143,7 @@ function App() {
   const [contratoSelecionadoId, setContratoSelecionadoId] = useState<string | null>(null);
   const lastTriggerRef = useRef<HTMLElement | null>(null);
   const tableSectionRef = useRef<HTMLElement | null>(null);
+  const vencidosSectionRef = useRef<HTMLElement | null>(null);
 
   const contratosIds = useMemo(() => new Set(contratos.map((contrato) => contrato.id)), [contratos]);
 
@@ -148,6 +154,10 @@ function App() {
 
   function scrollToTable() {
     tableSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function scrollToVencidos() {
+    vencidosSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
   function openContrato(id: string) {
@@ -171,7 +181,11 @@ function App() {
   function handleChartStatusSelect(status: 'vencido' | 'critico' | 'atencao' | 'ok' | 'sem_status') {
     if (status === 'vencido') {
       aplicarFiltros({ status: 'vencido', somenteProximos30: false, faixaVencimento: 'todos' });
-    } else if (status === 'critico') {
+      scrollToVencidos();
+      return;
+    }
+
+    if (status === 'critico') {
       aplicarFiltros({ faixaVencimento: 'ate_7', status: 'todos', somenteProximos30: false });
     } else if (status === 'atencao') {
       aplicarFiltros({ faixaVencimento: 'ate_30', status: 'todos', somenteProximos30: false });
@@ -182,6 +196,15 @@ function App() {
     }
 
     scrollToTable();
+  }
+
+  function handleKpiSelect(
+    alvo: 'total' | 'valor' | 'ativos' | 'vencidos' | 'proximos' | 'incompletos',
+  ) {
+    ativarKpi(alvo);
+    if (alvo === 'vencidos') {
+      scrollToVencidos();
+    }
   }
 
   const chartsLoadingFallback = (
@@ -264,7 +287,7 @@ function App() {
                 title="Visão geral dos contratos"
                 description="Selecione um indicador para filtrar a base automaticamente e explorar o recorte."
               />
-              <IndicatorCards metricas={metricas} activeKpi={activeKpi} onSelect={ativarKpi} />
+              <IndicatorCards metricas={metricas} activeKpi={activeKpi} onSelect={handleKpiSelect} />
             </section>
 
             <FiltersBar
@@ -281,17 +304,17 @@ function App() {
             <section ref={tableSectionRef} className="grid gap-4">
               <SectionHeader
                 kicker="Consulta operacional"
-                title="Base de contratos"
-                description="Leitura administrativa com filtros, ordenação, paginação e detalhe contextual."
+                title="Contratos vigentes"
+                description="Contratos ainda dentro do prazo. Clique em qualquer linha para ver os detalhes completos."
                 trailing={
                   <span className="tnum inline-flex items-center rounded-pill border border-border bg-surface px-3 py-1.5 text-sm font-medium text-text-muted">
                     <span className="mr-1.5 inline-block h-1.5 w-1.5 rounded-pill bg-primary-600" />
-                    {formatNumeroInteiro(totalResultados)} no recorte atual
+                    {formatNumeroInteiro(totalResultados)} vigente{totalResultados === 1 ? '' : 's'} no recorte
                   </span>
                 }
               />
 
-              {totalResultados === 0 ? (
+              {totalResultados === 0 && totalResultadosVencidos === 0 ? (
                 <EmptyState
                   icon={<SearchIcon className="h-6 w-6" />}
                   title="Nenhum contrato encontrado"
@@ -302,6 +325,21 @@ function App() {
                     </button>
                   }
                 />
+              ) : totalResultados === 0 ? (
+                <div className="rounded-xl border border-border-divider bg-surface px-5 py-6 text-center shadow-soft">
+                  <p className="text-sm text-text-muted">
+                    Nenhum contrato vigente neste recorte.{' '}
+                    <button
+                      type="button"
+                      onClick={scrollToVencidos}
+                      className="font-medium text-primary-700 underline-offset-2 hover:underline"
+                    >
+                      Ver {formatNumeroInteiro(totalResultadosVencidos)} contrato
+                      {totalResultadosVencidos === 1 ? '' : 's'} vencido
+                      {totalResultadosVencidos === 1 ? '' : 's'} ↓
+                    </button>
+                  </p>
+                </div>
               ) : (
                 <>
                   <ContratosTable
@@ -334,6 +372,55 @@ function App() {
                 </>
               )}
             </section>
+
+            {totalResultadosVencidos > 0 ? (
+              <section
+                ref={vencidosSectionRef}
+                id="contratos-vencidos"
+                className="grid gap-4 scroll-mt-24"
+              >
+                <SectionHeader
+                  kicker="Atenção"
+                  title="Contratos vencidos"
+                  description="Contratos com data de vencimento já expirada. Clique em qualquer linha para ver os detalhes."
+                  trailing={
+                    <span className="tnum inline-flex items-center rounded-pill border border-status-critical/40 bg-status-criticalBg px-3 py-1.5 text-sm font-medium text-status-critical">
+                      <span className="mr-1.5 inline-block h-1.5 w-1.5 rounded-pill bg-status-critical" />
+                      {formatNumeroInteiro(totalResultadosVencidos)} vencido
+                      {totalResultadosVencidos === 1 ? '' : 's'}
+                    </span>
+                  }
+                />
+
+                <ContratosTable
+                  contratos={paginaVencidos}
+                  totalResultados={totalResultadosVencidos}
+                  paginaAtual={paginaAtualVencidos}
+                  totalPaginas={totalPaginasVencidos}
+                  itensPorPagina={itensPorPagina}
+                  ordenacao={ordenacao}
+                  compactMode={compactMode}
+                  onToggleCompactMode={() => setCompactMode((current) => !current)}
+                  onSort={alternarOrdenacao}
+                  onOpenDetail={(contrato) => openContrato(contrato.id)}
+                  onPageChange={definirPaginaVencidos}
+                  onPageSizeChange={definirItensPorPagina}
+                />
+
+                <ContratosMobileList
+                  contratos={paginaVencidos}
+                  totalResultados={totalResultadosVencidos}
+                  paginaAtual={paginaAtualVencidos}
+                  totalPaginas={totalPaginasVencidos}
+                  itensPorPagina={itensPorPagina}
+                  ordenacao={ordenacao}
+                  onSortChange={definirOrdenacao}
+                  onOpenDetail={(contrato) => openContrato(contrato.id)}
+                  onPageChange={definirPaginaVencidos}
+                  onPageSizeChange={definirItensPorPagina}
+                />
+              </section>
+            ) : null}
 
             <section className="grid gap-4">
               <SectionHeader

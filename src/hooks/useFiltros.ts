@@ -64,6 +64,10 @@ type UseFiltrosResult = {
   totalPaginas: number;
   totalResultados: number;
   pagina: Contrato[];
+  paginaAtualVencidos: number;
+  totalPaginasVencidos: number;
+  totalResultadosVencidos: number;
+  paginaVencidos: Contrato[];
   contratosFiltrados: Contrato[];
   metricas: MetricasFiltros;
   filtrosAtivos: number;
@@ -77,6 +81,7 @@ type UseFiltrosResult = {
   alternarOrdenacao: (campo: OrdenacaoCampo) => void;
   definirOrdenacao: (campo: OrdenacaoCampo, direcao: OrdenacaoDirecao) => void;
   definirPagina: (page: number) => void;
+  definirPaginaVencidos: (page: number) => void;
   definirItensPorPagina: (value: number) => void;
   contarResultadosComFiltros: (candidate: FiltrosContratosState) => number;
   ativarKpi: (
@@ -448,6 +453,7 @@ export function useFiltros(contratos: Contrato[]): UseFiltrosResult {
   const [filtros, setFiltros] = useState<FiltrosContratosState>(initial.filtros);
   const [ordenacao, setOrdenacao] = useState<OrdenacaoState>(initial.ordenacao);
   const [paginaAtual, setPaginaAtual] = useState(initial.paginaAtual);
+  const [paginaAtualVencidos, setPaginaAtualVencidos] = useState(1);
   const [itensPorPagina, setItensPorPagina] = useState(initial.itensPorPagina || DEFAULT_PAGE_SIZE);
   const buscaDiferida = useDebouncedValue(filtros.busca, 250);
 
@@ -461,13 +467,37 @@ export function useFiltros(contratos: Contrato[]): UseFiltrosResult {
     [contratosFiltrados, ordenacao],
   );
 
-  const totalPaginas = Math.max(1, Math.ceil(contratosOrdenados.length / itensPorPagina));
+  const contratosAtivosOrdenados = useMemo(
+    () => contratosOrdenados.filter((contrato) => contrato.statusNormalizado !== 'vencido'),
+    [contratosOrdenados],
+  );
+
+  const contratosVencidosOrdenados = useMemo(
+    () => contratosOrdenados.filter((contrato) => contrato.statusNormalizado === 'vencido'),
+    [contratosOrdenados],
+  );
+
+  const totalPaginas = Math.max(1, Math.ceil(contratosAtivosOrdenados.length / itensPorPagina));
   const paginaSegura = Math.min(Math.max(paginaAtual, 1), totalPaginas);
 
   const pagina = useMemo(() => {
     const indiceInicial = (paginaSegura - 1) * itensPorPagina;
-    return contratosOrdenados.slice(indiceInicial, indiceInicial + itensPorPagina);
-  }, [contratosOrdenados, itensPorPagina, paginaSegura]);
+    return contratosAtivosOrdenados.slice(indiceInicial, indiceInicial + itensPorPagina);
+  }, [contratosAtivosOrdenados, itensPorPagina, paginaSegura]);
+
+  const totalPaginasVencidos = Math.max(
+    1,
+    Math.ceil(contratosVencidosOrdenados.length / itensPorPagina),
+  );
+  const paginaSeguraVencidos = Math.min(
+    Math.max(paginaAtualVencidos, 1),
+    totalPaginasVencidos,
+  );
+
+  const paginaVencidos = useMemo(() => {
+    const indiceInicial = (paginaSeguraVencidos - 1) * itensPorPagina;
+    return contratosVencidosOrdenados.slice(indiceInicial, indiceInicial + itensPorPagina);
+  }, [contratosVencidosOrdenados, itensPorPagina, paginaSeguraVencidos]);
 
   const metricas = useMemo(() => calcularMetricas(contratosFiltrados), [contratosFiltrados]);
 
@@ -493,6 +523,7 @@ export function useFiltros(contratos: Contrato[]): UseFiltrosResult {
     startTransition(() => {
       setFiltros((current) => ({ ...current, [campo]: value }));
       setPaginaAtual(1);
+      setPaginaAtualVencidos(1);
     });
   }
 
@@ -500,6 +531,7 @@ export function useFiltros(contratos: Contrato[]): UseFiltrosResult {
     startTransition(() => {
       setFiltros((current) => ({ ...current, ...patch }));
       setPaginaAtual(1);
+      setPaginaAtualVencidos(1);
     });
   }
 
@@ -509,6 +541,7 @@ export function useFiltros(contratos: Contrato[]): UseFiltrosResult {
       setOrdenacao(ORDENACAO_INICIAL);
       setItensPorPagina(DEFAULT_PAGE_SIZE);
       setPaginaAtual(1);
+      setPaginaAtualVencidos(1);
     });
   }
 
@@ -531,6 +564,7 @@ export function useFiltros(contratos: Contrato[]): UseFiltrosResult {
         };
       });
       setPaginaAtual(1);
+      setPaginaAtualVencidos(1);
     });
   }
 
@@ -538,6 +572,7 @@ export function useFiltros(contratos: Contrato[]): UseFiltrosResult {
     startTransition(() => {
       setOrdenacao({ campo, direcao });
       setPaginaAtual(1);
+      setPaginaAtualVencidos(1);
     });
   }
 
@@ -547,10 +582,17 @@ export function useFiltros(contratos: Contrato[]): UseFiltrosResult {
     });
   }
 
+  function definirPaginaVencidos(page: number) {
+    startTransition(() => {
+      setPaginaAtualVencidos(Math.max(1, Math.min(page, totalPaginasVencidos)));
+    });
+  }
+
   function definirItensPorPagina(value: number) {
     startTransition(() => {
       setItensPorPagina(value);
       setPaginaAtual(1);
+      setPaginaAtualVencidos(1);
     });
   }
 
@@ -731,8 +773,12 @@ export function useFiltros(contratos: Contrato[]): UseFiltrosResult {
     paginaAtual: paginaSegura,
     itensPorPagina,
     totalPaginas,
-    totalResultados: contratosOrdenados.length,
+    totalResultados: contratosAtivosOrdenados.length,
     pagina,
+    paginaAtualVencidos: paginaSeguraVencidos,
+    totalPaginasVencidos,
+    totalResultadosVencidos: contratosVencidosOrdenados.length,
+    paginaVencidos,
     contratosFiltrados,
     metricas,
     filtrosAtivos,
@@ -743,6 +789,7 @@ export function useFiltros(contratos: Contrato[]): UseFiltrosResult {
     alternarOrdenacao,
     definirOrdenacao,
     definirPagina,
+    definirPaginaVencidos,
     definirItensPorPagina,
     contarResultadosComFiltros,
     ativarKpi,
