@@ -23,11 +23,12 @@ export function Header() {
       </a>
 
       <div
-        className="relative overflow-hidden border-b border-white/10"
+        className="relative overflow-hidden"
         style={{
           background:
             'linear-gradient(135deg, var(--color-primary-900) 0%, var(--color-primary-800) 45%, var(--color-primary-700) 100%)',
           paddingTop: 'var(--safe-top)',
+          borderBottom: '1px solid var(--color-on-primary-surface-10)',
         }}
       >
         <div
@@ -42,7 +43,13 @@ export function Header() {
         <div className="app-shell relative">
           <div className="flex h-[64px] items-center justify-between gap-3 md:h-[80px]">
             <div className="flex min-w-0 items-center gap-3 md:gap-4">
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-white/10 p-1.5 ring-1 ring-white/15 backdrop-blur-sm md:h-12 md:w-12">
+              <div
+                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg p-1.5 backdrop-blur-sm md:h-12 md:w-12 md:p-2"
+                style={{
+                  background: 'var(--color-on-primary-surface-10)',
+                  boxShadow: 'inset 0 0 0 1px var(--color-on-primary-surface-15)',
+                }}
+              >
                 <img
                   src={logoIguape}
                   alt="Brasão da Prefeitura de Iguape"
@@ -53,13 +60,13 @@ export function Header() {
               <div
                 className="hidden shrink-0 sm:block"
                 aria-hidden="true"
-                style={{ width: '1px', height: '36px', background: 'rgba(255,255,255,.2)' }}
+                style={{ width: '1px', height: '36px', background: 'var(--color-on-primary-surface-20)' }}
               />
 
               <div className="min-w-0">
                 <p
                   className="hidden text-[11px] font-semibold uppercase tracking-[0.18em] sm:block"
-                  style={{ color: 'rgba(255,255,255,.7)' }}
+                  style={{ color: 'var(--color-on-primary-75)' }}
                 >
                   Prefeitura de Iguape/SP
                 </p>
@@ -71,8 +78,12 @@ export function Header() {
 
             <div className="hidden lg:block">
               <div
-                className="inline-flex items-center gap-2 rounded-pill border border-white/15 bg-white/10 px-3 py-1.5 text-xs font-medium backdrop-blur-sm"
-                style={{ color: 'rgba(255,255,255,.85)' }}
+                className="inline-flex items-center gap-2 rounded-pill px-3 py-1.5 text-xs font-medium backdrop-blur-sm"
+                style={{
+                  background: 'var(--color-on-primary-surface-10)',
+                  border: '1px solid var(--color-on-primary-surface-15)',
+                  color: 'var(--color-on-primary-90)',
+                }}
               >
                 <span
                   aria-hidden="true"

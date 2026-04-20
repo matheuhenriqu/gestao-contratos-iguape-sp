@@ -151,6 +151,21 @@ a {
   animation: fade-in 260ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
+.fade-in-up {
+  animation: fade-in-up 360ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.stagger > * {
+  animation: fade-in-up 360ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.stagger > *:nth-child(1) { animation-delay: 40ms; }
+.stagger > *:nth-child(2) { animation-delay: 100ms; }
+.stagger > *:nth-child(3) { animation-delay: 160ms; }
+.stagger > *:nth-child(4) { animation-delay: 220ms; }
+.stagger > *:nth-child(5) { animation-delay: 280ms; }
+.stagger > *:nth-child(6) { animation-delay: 340ms; }
+
 @keyframes fade-in {
   from {
     opacity: 0;
@@ -163,8 +178,22 @@ a {
   }
 }
 
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .fade-in,
+  .fade-in-up,
+  .stagger > *,
   .shimmer::after {
     animation: none !important;
   }
@@ -358,5 +387,15 @@ a {
     outline: 2px solid var(--color-primary-600);
     outline-offset: -2px;
     background: var(--color-primary-50);
+  }
+
+  .anchor-offset {
+    scroll-margin-top: calc(var(--header-height-mobile) + 16px);
+  }
+
+  @media (min-width: 768px) {
+    .anchor-offset {
+      scroll-margin-top: calc(var(--header-height-desktop) + 20px);
+    }
   }
 }
