@@ -280,7 +280,7 @@ function App() {
             />
           </section>
         ) : (
-          <div className="grid gap-6 md:gap-8 fade-in">
+          <div className="stagger grid gap-6 md:gap-8 xl:gap-10">
             <section className="grid gap-4">
               <SectionHeader
                 kicker="Painel executivo"
@@ -301,7 +301,7 @@ function App() {
               onClear={limparFiltros}
             />
 
-            <section ref={tableSectionRef} className="grid gap-4">
+            <section ref={tableSectionRef} className="anchor-offset grid gap-4">
               <SectionHeader
                 kicker="Consulta operacional"
                 title="Contratos vigentes"
@@ -334,9 +334,9 @@ function App() {
                       onClick={scrollToVencidos}
                       className="font-medium text-primary-700 underline-offset-2 hover:underline"
                     >
-                      Ver {formatNumeroInteiro(totalResultadosVencidos)} contrato
-                      {totalResultadosVencidos === 1 ? '' : 's'} vencido
-                      {totalResultadosVencidos === 1 ? '' : 's'} ↓
+                      {totalResultadosVencidos === 1
+                        ? 'Ver 1 contrato vencido ↓'
+                        : `Ver ${formatNumeroInteiro(totalResultadosVencidos)} contratos vencidos ↓`}
                     </button>
                   </p>
                 </div>
@@ -377,7 +377,7 @@ function App() {
               <section
                 ref={vencidosSectionRef}
                 id="contratos-vencidos"
-                className="grid gap-4 scroll-mt-24"
+                className="anchor-offset grid gap-4"
               >
                 <SectionHeader
                   kicker="Atenção"

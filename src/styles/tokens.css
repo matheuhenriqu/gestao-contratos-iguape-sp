@@ -31,18 +31,31 @@
   --color-text-subtle: #6b7a8e;
   --color-text-inverse: #ffffff;
   --color-text-on-primary: #f1f7fc;
+  --color-on-primary-90: rgba(255, 255, 255, 0.92);
+  --color-on-primary-75: rgba(255, 255, 255, 0.82);
+  --color-on-primary-65: rgba(255, 255, 255, 0.72);
+  --color-on-primary-muted: rgba(255, 255, 255, 0.62);
+  --color-on-primary-subtle: rgba(255, 255, 255, 0.34);
+  --color-on-primary-surface-20: rgba(255, 255, 255, 0.18);
+  --color-on-primary-surface-15: rgba(255, 255, 255, 0.12);
+  --color-on-primary-surface-10: rgba(255, 255, 255, 0.08);
 
   --color-status-critico-bg: #fdebea;
   --color-status-critico: #b42318;
   --color-status-critico-ring: rgba(180, 35, 24, 0.18);
+  --color-status-critico-soft: rgba(180, 35, 24, 0.28);
   --color-status-atencao-bg: #fff3e0;
   --color-status-atencao: #a35d00;
   --color-status-atencao-ring: rgba(163, 93, 0, 0.18);
+  --color-status-atencao-soft: rgba(198, 144, 80, 0.3);
   --color-status-ok-bg: #e6f4ec;
   --color-status-ok: #1c7a4a;
   --color-status-ok-ring: rgba(28, 122, 74, 0.18);
   --color-status-neutro-bg: #eef2f6;
   --color-status-neutro: #475569;
+  --color-status-neutro-ring: rgba(107, 122, 142, 0.22);
+  --color-secondary-soft: rgba(79, 176, 180, 0.22);
+  --color-secondary-ring: rgba(43, 144, 148, 0.22);
 
   --color-hero-ok: #2aa576;
   --color-hero-warning: #d9963e;

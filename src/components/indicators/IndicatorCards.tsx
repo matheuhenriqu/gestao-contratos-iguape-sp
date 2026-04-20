@@ -75,39 +75,39 @@ const TONE_STYLES: Record<
     activeRing: 'ring-primary-200',
   },
   secondary: {
-    iconBg: 'bg-[rgba(43,144,148,0.12)]',
+    iconBg: 'bg-[var(--color-secondary-soft)]',
     iconColor: 'text-secondary-700',
     accent: 'bg-secondary-600',
     activeBorder: 'border-secondary-600',
-    activeRing: 'ring-[rgba(43,144,148,0.25)]',
+    activeRing: 'ring-[var(--color-secondary-ring)]',
   },
   success: {
     iconBg: 'bg-status-okBg',
     iconColor: 'text-status-ok',
     accent: 'bg-status-ok',
     activeBorder: 'border-status-ok',
-    activeRing: 'ring-[rgba(28,122,74,0.18)]',
+    activeRing: 'ring-[var(--color-status-ok-ring)]',
   },
   danger: {
     iconBg: 'bg-status-criticalBg',
     iconColor: 'text-status-critical',
     accent: 'bg-status-critical',
     activeBorder: 'border-status-critical',
-    activeRing: 'ring-[rgba(180,35,24,0.18)]',
+    activeRing: 'ring-[var(--color-status-critico-ring)]',
   },
   warning: {
     iconBg: 'bg-status-warningBg',
     iconColor: 'text-status-warning',
     accent: 'bg-status-warning',
     activeBorder: 'border-status-warning',
-    activeRing: 'ring-[rgba(163,93,0,0.18)]',
+    activeRing: 'ring-[var(--color-status-atencao-ring)]',
   },
   neutral: {
     iconBg: 'bg-surface-2',
     iconColor: 'text-text-muted',
     accent: 'bg-text-subtle',
     activeBorder: 'border-text-subtle',
-    activeRing: 'ring-[rgba(107,122,142,0.25)]',
+    activeRing: 'ring-[var(--color-status-neutro-ring)]',
   },
 };
 
@@ -170,7 +170,7 @@ function IndicatorCardsComponent({ metricas, activeKpi, onSelect }: IndicatorCar
   return (
     <section
       aria-label="Indicadores principais"
-      className="grid grid-cols-1 gap-3 min-[480px]:grid-cols-2 md:grid-cols-3 xl:grid-cols-6 xl:gap-4"
+      className="grid grid-cols-1 gap-3 min-[480px]:grid-cols-2 md:grid-cols-3 min-[1100px]:grid-cols-6 xl:gap-4"
     >
       {CARD_CONFIG.map((card) => {
         const Icon = card.icon;
@@ -200,8 +200,9 @@ function IndicatorCardsComponent({ metricas, activeKpi, onSelect }: IndicatorCar
             key={card.key}
             type="button"
             onClick={() => onSelect(card.key)}
+            aria-pressed={isActive}
             title={card.key === 'valor' ? formatMoedaBRL(metricas.valorTotal) : undefined}
-            className={`card-interactive group relative flex min-h-[148px] flex-col items-start gap-3 overflow-hidden rounded-xl border bg-surface px-4 py-4 text-left md:px-5 md:py-5 ${
+            className={`card-interactive group relative flex min-h-[140px] flex-col items-start gap-3 overflow-hidden rounded-xl border bg-surface px-4 py-4 text-left md:min-h-[148px] md:px-5 md:py-5 ${
               isActive
                 ? `${tone.activeBorder} shadow-raised ring-2 ${tone.activeRing} -translate-y-0.5`
                 : 'border-border shadow-soft'
