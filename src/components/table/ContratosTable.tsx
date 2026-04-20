@@ -47,17 +47,12 @@ const COLUMNS: Array<{
   align?: 'left' | 'right';
 }> = [
   { key: 'statusNormalizado', label: 'Status', minWidth: '120px' },
-  { key: 'numeroModalidade', label: 'Nº Modalidade', minWidth: '100px' },
-  { key: 'contrato', label: 'Contrato', minWidth: '110px' },
-  { key: 'processo', label: 'Processo', minWidth: '140px' },
+  { key: 'contrato', label: 'Contrato', minWidth: '120px' },
   { key: 'objeto', label: 'Objeto', minWidth: '420px' },
   { key: 'empresaContratada', label: 'Empresa contratada', minWidth: '240px' },
   { key: 'valor', label: 'Valor', minWidth: '130px', align: 'right' },
-  { key: 'dataInicio', label: 'Data início', minWidth: '110px' },
-  { key: 'dataVencimento', label: 'Data vencimento', minWidth: '110px' },
-  { key: 'diasParaVencimento', label: 'Dias p/ vencimento', minWidth: '130px', align: 'right' },
-  { key: 'gestor', label: 'Gestor', minWidth: '180px' },
-  { key: 'fiscal', label: 'Fiscal', minWidth: '180px' },
+  { key: 'dataVencimento', label: 'Vencimento', minWidth: '110px' },
+  { key: 'diasParaVencimento', label: 'Dias', minWidth: '120px', align: 'right' },
 ] as const;
 
 function modalidadeAnchor(key: string): string {
@@ -324,7 +319,7 @@ export function ContratosTable({
                   id={panelId}
                   className="overflow-x-auto border-t border-border-divider fade-in"
                 >
-                  <table className="w-full min-w-[2000px] border-separate border-spacing-0">
+                  <table className="w-full min-w-[1180px] border-separate border-spacing-0">
                     <thead>
                       <tr>
                         {COLUMNS.map((column) => (
@@ -377,28 +372,10 @@ export function ContratosTable({
 
                             <td className={`border-b border-border-divider px-3 align-middle ${rowPadding}`}>
                               <span
-                                className="block truncate text-sm text-text"
-                                title={textoOuNaoInformado(contrato.numeroModalidade)}
-                              >
-                                {textoOuNaoInformado(contrato.numeroModalidade)}
-                              </span>
-                            </td>
-
-                            <td className={`border-b border-border-divider px-3 align-middle ${rowPadding}`}>
-                              <span
                                 className="block truncate text-sm font-medium text-text"
                                 title={textoOuNaoInformado(contrato.contrato)}
                               >
                                 {textoOuNaoInformado(contrato.contrato)}
-                              </span>
-                            </td>
-
-                            <td className={`border-b border-border-divider px-3 align-middle ${rowPadding}`}>
-                              <span
-                                className="block truncate text-sm text-text"
-                                title={textoOuNaoInformado(contrato.processo)}
-                              >
-                                {textoOuNaoInformado(contrato.processo)}
                               </span>
                             </td>
 
@@ -427,38 +404,14 @@ export function ContratosTable({
                             </td>
 
                             <td className={`tnum border-b border-border-divider px-3 align-middle ${rowPadding}`}>
-                              <span className="text-sm text-text">{formatDataOuTraco(contrato.dataInicio)}</span>
-                            </td>
-
-                            <td className={`tnum border-b border-border-divider px-3 align-middle ${rowPadding}`}>
                               <span className="text-sm text-text">{formatDataOuTraco(contrato.dataVencimento)}</span>
                             </td>
 
                             <td
-                              className={`tnum border-b border-border-divider px-3 text-right align-middle ${rowPadding}`}
+                              className={`tnum border-b border-border-divider px-3 pr-4 text-right align-middle ${rowPadding}`}
                             >
                               <span className={`text-sm font-medium ${getCriticidadeTextClass(contrato.criticidade)}`}>
                                 {formatDiasParaVencimento(contrato.diasParaVencimento)}
-                              </span>
-                            </td>
-
-                            <td className={`border-b border-border-divider px-3 align-middle ${rowPadding}`}>
-                              <span
-                                className="block truncate text-sm text-text"
-                                title={textoOuNaoInformado(contrato.gestor)}
-                              >
-                                {textoOuNaoInformado(contrato.gestor)}
-                              </span>
-                            </td>
-
-                            <td
-                              className={`border-b border-border-divider px-3 align-middle last:pr-4 ${rowPadding}`}
-                            >
-                              <span
-                                className="block truncate text-sm text-text"
-                                title={textoOuNaoInformado(contrato.fiscal)}
-                              >
-                                {textoOuNaoInformado(contrato.fiscal)}
                               </span>
                             </td>
                           </tr>
