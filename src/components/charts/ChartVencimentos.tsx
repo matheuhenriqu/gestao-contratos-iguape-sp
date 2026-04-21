@@ -36,12 +36,7 @@ export function ChartVencimentos({ contratos, onSelectFaixa }: ChartVencimentosP
   );
 
   return (
-    <ChartShell
-      kicker="Visão cronológica"
-      title="Vencimentos por período"
-      subtitle="Distribuição cronológica nas faixas oficiais de vencimento."
-      hint="Clique nas barras"
-    >
+    <ChartShell title="Vencimentos por período">
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={data} margin={{ top: 8, right: 8, bottom: 12, left: 0 }}>
           <CartesianGrid stroke={chartGridColor} strokeDasharray="3 3" vertical={false} />

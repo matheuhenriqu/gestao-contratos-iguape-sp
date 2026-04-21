@@ -65,12 +65,7 @@ export function ChartStatus({ contratos, onSelectStatus }: ChartStatusProps) {
   }, [contratos]);
 
   return (
-    <ChartShell
-      kicker="Situação da carteira"
-      title="Contratos por status"
-      subtitle="Leitura rápida da carteira por atraso, urgência e registros sem vencimento."
-      hint="Clique para filtrar"
-    >
+    <ChartShell title="Contratos por status">
       <div className="grid h-full gap-4 lg:grid-cols-[minmax(0,1fr)_184px]">
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>

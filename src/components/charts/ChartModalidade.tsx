@@ -40,12 +40,7 @@ export function ChartModalidade({ contratos, onSelectModalidade }: ChartModalida
   );
 
   return (
-    <ChartShell
-      kicker="Distribuição por natureza"
-      title="Contratos por modalidade"
-      subtitle="Frequência de modalidades no recorte filtrado."
-      hint="Clique nas barras"
-    >
+    <ChartShell title="Contratos por modalidade">
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={data} layout="vertical" margin={{ top: 4, right: 22, bottom: 4, left: 4 }}>
           <CartesianGrid stroke={chartGridColor} strokeDasharray="3 3" horizontal={false} />
