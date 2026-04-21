@@ -23,42 +23,12 @@ type IndicatorCardsProps = {
 };
 
 const CARD_CONFIG = [
-  {
-    key: 'total',
-    label: 'Total de contratos',
-    icon: DatabaseIcon,
-    tone: 'primary',
-  },
-  {
-    key: 'valor',
-    label: 'Valor total',
-    icon: WalletIcon,
-    tone: 'secondary',
-  },
-  {
-    key: 'ativos',
-    label: 'Ativos',
-    icon: CheckCircleIcon,
-    tone: 'success',
-  },
-  {
-    key: 'vencidos',
-    label: 'Vencidos',
-    icon: AlertCircleIcon,
-    tone: 'danger',
-  },
-  {
-    key: 'proximos',
-    label: 'Próximos',
-    icon: ClockIcon,
-    tone: 'warning',
-  },
-  {
-    key: 'incompletos',
-    label: 'Dados incompletos',
-    icon: BuildingIcon,
-    tone: 'neutral',
-  },
+  { key: 'total', label: 'Total', icon: DatabaseIcon, tone: 'primary' },
+  { key: 'valor', label: 'Valor', icon: WalletIcon, tone: 'secondary' },
+  { key: 'ativos', label: 'Ativos', icon: CheckCircleIcon, tone: 'success' },
+  { key: 'vencidos', label: 'Vencidos', icon: AlertCircleIcon, tone: 'danger' },
+  { key: 'proximos', label: 'Próx. 30d', icon: ClockIcon, tone: 'warning' },
+  { key: 'incompletos', label: 'Incompletos', icon: BuildingIcon, tone: 'neutral' },
 ] as const;
 
 type Tone = (typeof CARD_CONFIG)[number]['tone'];
@@ -111,66 +81,11 @@ const TONE_STYLES: Record<
   },
 };
 
-function formatPercent(value: number, base: number): string {
-  if (!base) {
-    return '—';
-  }
-
-  const pct = (value / base) * 100;
-  return `${pct.toFixed(1).replace('.', ',')}%`;
-}
-
-function getHelper(
-  key: IndicatorCardsProps['activeKpi'] | (typeof CARD_CONFIG)[number]['key'],
-  metricas: IndicatorCardsProps['metricas'],
-): string {
-  switch (key) {
-    case 'total':
-      return 'Base integral da planilha oficial';
-    case 'valor':
-      return `${formatNumeroInteiro(metricas.totalContratos)} contratos com valor consolidado`;
-    case 'ativos':
-      return `${formatNumeroInteiro(metricas.proximosDoVencimento)} vencem em até 30 dias`;
-    case 'vencidos':
-      return `${formatNumeroInteiro(metricas.vencidos)} registros com prazo expirado`;
-    case 'proximos':
-      return 'Até 30 dias, sem atraso';
-    case 'incompletos':
-      return 'Campos essenciais ausentes';
-    default:
-      return '';
-  }
-}
-
-function getRelativeShare(
-  key: (typeof CARD_CONFIG)[number]['key'],
-  metricas: IndicatorCardsProps['metricas'],
-): string | null {
-  const base = metricas.totalContratos;
-
-  if (!base) {
-    return null;
-  }
-
-  switch (key) {
-    case 'ativos':
-      return `${formatPercent(metricas.ativos, base)} da base`;
-    case 'vencidos':
-      return `${formatPercent(metricas.vencidos, base)} da base`;
-    case 'proximos':
-      return `${formatPercent(metricas.proximosDoVencimento, base)} da base`;
-    case 'incompletos':
-      return `${formatPercent(metricas.dadosIncompletos, base)} da base`;
-    default:
-      return null;
-  }
-}
-
 function IndicatorCardsComponent({ metricas, activeKpi, onSelect }: IndicatorCardsProps) {
   return (
     <section
       aria-label="Indicadores principais"
-      className="grid grid-cols-1 gap-3 min-[480px]:grid-cols-2 md:grid-cols-3 min-[1100px]:grid-cols-6 xl:gap-4"
+      className="grid grid-cols-2 gap-2.5 md:grid-cols-3 md:gap-3 min-[1100px]:grid-cols-6"
     >
       {CARD_CONFIG.map((card) => {
         const Icon = card.icon;
@@ -193,7 +108,6 @@ function IndicatorCardsComponent({ metricas, activeKpi, onSelect }: IndicatorCar
           card.key === 'valor'
             ? formatMoedaCompactaBRL(metricas.valorTotal)
             : formatNumeroInteiro(Number(numericValue));
-        const share = getRelativeShare(card.key, metricas);
 
         return (
           <button
@@ -202,43 +116,32 @@ function IndicatorCardsComponent({ metricas, activeKpi, onSelect }: IndicatorCar
             onClick={() => onSelect(card.key)}
             aria-pressed={isActive}
             title={card.key === 'valor' ? formatMoedaBRL(metricas.valorTotal) : undefined}
-            className={`card-interactive group relative flex min-h-[140px] flex-col items-start gap-3 overflow-hidden rounded-xl border bg-surface px-4 py-4 text-left md:min-h-[148px] md:px-5 md:py-5 ${
+            className={`card-interactive group relative flex min-h-[92px] flex-col justify-between gap-2 overflow-hidden rounded-xl border bg-surface px-3.5 py-3 text-left md:min-h-[104px] md:px-4 md:py-3.5 ${
               isActive
-                ? `${tone.activeBorder} shadow-raised ring-2 ${tone.activeRing} -translate-y-0.5`
+                ? `${tone.activeBorder} shadow-raised ring-2 ${tone.activeRing}`
                 : 'border-border shadow-soft'
             }`}
           >
             <span
               aria-hidden="true"
-              className={`absolute left-0 top-0 h-full w-1 ${tone.accent} ${isActive ? 'opacity-100' : 'opacity-0 transition-opacity group-hover:opacity-60'}`}
+              className={`absolute left-0 top-0 h-full w-0.5 ${tone.accent} transition-opacity duration-200 ${
+                isActive ? 'opacity-100' : 'opacity-0 group-hover:opacity-60'
+              }`}
             />
 
-            <div className="flex w-full items-center justify-between gap-2">
-              <span className="text-[11px] font-semibold uppercase tracking-[0.1em] text-text-subtle">
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-text-subtle">
                 {card.label}
               </span>
               <span
-                className={`inline-flex h-9 w-9 items-center justify-center rounded-lg ${tone.iconBg} ${tone.iconColor}`}
+                className={`inline-flex h-7 w-7 items-center justify-center rounded-md ${tone.iconBg} ${tone.iconColor}`}
               >
-                <Icon className="h-[18px] w-[18px]" />
+                <Icon className="h-4 w-4" />
               </span>
             </div>
 
-            <div className="flex w-full items-baseline gap-2">
-              <span className="tnum text-3xl font-semibold leading-none tracking-tight text-text">
-                {value}
-              </span>
-              {share ? (
-                <span
-                  className={`tnum rounded-pill border px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.06em] ${tone.iconBg} ${tone.iconColor} border-transparent`}
-                >
-                  {share}
-                </span>
-              ) : null}
-            </div>
-
-            <span className="text-sm leading-snug text-text-muted">
-              {getHelper(card.key, metricas)}
+            <span className="tnum text-2xl font-semibold leading-none tracking-tight text-text md:text-[26px]">
+              {value}
             </span>
           </button>
         );

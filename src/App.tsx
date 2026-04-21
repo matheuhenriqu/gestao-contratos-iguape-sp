@@ -3,7 +3,6 @@ import { FiltersBar } from './components/filters/FiltersBar';
 import { IndicatorCards } from './components/indicators/IndicatorCards';
 import { BackToTop } from './components/layout/BackToTop';
 import { Header } from './components/layout/Header';
-import { Hero } from './components/layout/Hero';
 import { Footer } from './components/layout/Footer';
 import { SectionHeader } from './components/layout/SectionHeader';
 import { ContratosMobileList } from './components/table/ContratosMobileList';
@@ -223,16 +222,6 @@ function App() {
     <div className="min-h-[100svh] bg-bg text-text">
       <Header />
 
-      {!isLoading && contratos.length > 0 ? (
-        <Hero
-          totalContratos={metricas.totalContratos}
-          valorTotal={metricas.valorTotal}
-          ativos={metricas.ativos}
-          vencidos={metricas.vencidos}
-          proximosDoVencimento={metricas.proximosDoVencimento}
-        />
-      ) : null}
-
       <main
         id="main"
         className="app-shell grid gap-6 pb-[calc(var(--safe-bottom)+32px)] pt-6 md:gap-8 md:pt-8"
@@ -245,15 +234,14 @@ function App() {
               <SkeletonBlock className="h-4 w-full max-w-lg" />
             </div>
 
-            <section className="grid grid-cols-1 gap-3 min-[480px]:grid-cols-2 md:grid-cols-3 xl:grid-cols-6 xl:gap-4">
+            <section className="grid grid-cols-2 gap-2.5 md:grid-cols-3 md:gap-3 min-[1100px]:grid-cols-6">
               {Array.from({ length: 6 }).map((_, index) => (
-                <div key={index} className="surface-card grid gap-3 p-4 md:p-5">
+                <div key={index} className="surface-card grid min-h-[92px] gap-2 p-3.5 md:min-h-[104px] md:p-4">
                   <div className="flex items-center justify-between">
-                    <SkeletonBlock className="h-3 w-24" />
-                    <SkeletonBlock className="h-9 w-9 rounded-lg" />
+                    <SkeletonBlock className="h-3 w-16" />
+                    <SkeletonBlock className="h-7 w-7 rounded-md" />
                   </div>
-                  <SkeletonBlock className="h-8 w-36" />
-                  <SkeletonBlock className="h-4 w-40" />
+                  <SkeletonBlock className="h-7 w-20" />
                 </div>
               ))}
             </section>
@@ -281,12 +269,7 @@ function App() {
           </section>
         ) : (
           <div className="stagger grid gap-6 md:gap-8 xl:gap-10">
-            <section className="grid gap-4">
-              <SectionHeader
-                kicker="Painel executivo"
-                title="Visão geral dos contratos"
-                description="Selecione um indicador para filtrar a base automaticamente e explorar o recorte."
-              />
+            <section className="grid gap-3">
               <IndicatorCards metricas={metricas} activeKpi={activeKpi} onSelect={handleKpiSelect} />
             </section>
 
@@ -303,13 +286,11 @@ function App() {
 
             <section ref={tableSectionRef} className="anchor-offset grid gap-4">
               <SectionHeader
-                kicker="Consulta operacional"
                 title="Contratos vigentes"
-                description="Contratos ainda dentro do prazo. Clique em qualquer linha para ver os detalhes completos."
                 trailing={
                   <span className="tnum inline-flex items-center rounded-pill border border-border bg-surface px-3 py-1.5 text-sm font-medium text-text-muted">
                     <span className="mr-1.5 inline-block h-1.5 w-1.5 rounded-pill bg-primary-600" />
-                    {formatNumeroInteiro(totalResultados)} vigente{totalResultados === 1 ? '' : 's'} no recorte
+                    {formatNumeroInteiro(totalResultados)} no recorte
                   </span>
                 }
               />
@@ -380,9 +361,8 @@ function App() {
                 className="anchor-offset grid gap-4"
               >
                 <SectionHeader
-                  kicker="Atenção"
                   title="Contratos vencidos"
-                  description="Contratos com data de vencimento já expirada. Clique em qualquer linha para ver os detalhes."
+                  tone="danger"
                   trailing={
                     <span className="tnum inline-flex items-center rounded-pill border border-status-critical/40 bg-status-criticalBg px-3 py-1.5 text-sm font-medium text-status-critical">
                       <span className="mr-1.5 inline-block h-1.5 w-1.5 rounded-pill bg-status-critical" />
@@ -424,9 +404,8 @@ function App() {
 
             <section className="grid gap-4">
               <SectionHeader
-                kicker="Análise visual"
-                title="Recortes de gestão"
-                description="Distribuições e rankings calculados com base no recorte atual — clique nos gráficos para aplicar filtros automaticamente."
+                title="Análise visual"
+                description="Clique nos gráficos para filtrar automaticamente."
               />
 
               <Suspense fallback={chartsLoadingFallback}>

@@ -77,40 +77,35 @@ export function ContratosMobileList({
 
   return (
     <section className="grid gap-3 md:hidden">
-      <div className="surface-card grid gap-3 p-4">
-        <div className="flex items-center justify-between gap-3">
-          <p className="tnum text-sm font-medium text-text">
-            {formatNumeroInteiro(totalResultados)} contrato{totalResultados === 1 ? '' : 's'}
-          </p>
+      <div className="surface-card flex items-center justify-between gap-2 p-3">
+        <p className="tnum text-sm font-medium text-text">
+          {formatNumeroInteiro(totalResultados)} contrato{totalResultados === 1 ? '' : 's'}
+        </p>
 
-          <label className="flex items-center gap-2 text-sm text-text-muted">
-            <span>Ordenar</span>
-            <select
-              value={`${ordenacao.campo}:${ordenacao.direcao}`}
-              onChange={(event) => {
-                const [campo, direcao] = event.target.value.split(':') as [
-                  OrdenacaoCampo,
-                  OrdenacaoDirecao,
-                ];
-                onSortChange(campo, direcao);
-              }}
-              className="field-base min-h-11 min-w-[168px]"
-            >
-              {SORT_OPTIONS.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </label>
-        </div>
-
-        <label className="flex items-center gap-2 text-sm text-text-muted">
-          <span>Por página</span>
+        <div className="flex items-center gap-2">
           <select
+            aria-label="Ordenar"
+            value={`${ordenacao.campo}:${ordenacao.direcao}`}
+            onChange={(event) => {
+              const [campo, direcao] = event.target.value.split(':') as [
+                OrdenacaoCampo,
+                OrdenacaoDirecao,
+              ];
+              onSortChange(campo, direcao);
+            }}
+            className="field-base min-h-10 min-w-[140px] text-sm"
+          >
+            {SORT_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+          <select
+            aria-label="Por página"
             value={itensPorPagina}
             onChange={(event) => onPageSizeChange(Number(event.target.value))}
-            className="field-base min-h-11 w-[96px]"
+            className="field-base min-h-10 w-[64px] text-sm"
           >
             {[25, 50, 100].map((value) => (
               <option key={value} value={value}>
@@ -118,7 +113,7 @@ export function ContratosMobileList({
               </option>
             ))}
           </select>
-        </label>
+        </div>
       </div>
 
       <div className="grid gap-3">
@@ -201,45 +196,39 @@ export function ContratosMobileList({
                           onOpenDetail(contrato);
                         }
                       }}
-                      className="card-interactive relative grid gap-2 overflow-hidden rounded-xl border border-border bg-surface px-3.5 py-3.5 pl-4 shadow-soft"
+                      className="card-interactive relative grid gap-1.5 overflow-hidden rounded-xl border border-border bg-surface px-3 py-3 pl-3.5 shadow-soft"
                     >
                       <span
                         aria-hidden="true"
                         className={`absolute left-0 top-0 h-full w-1 ${getFaixaTone(contrato.faixaVencimento)}`}
                       />
 
-                      <div className="flex items-center justify-between gap-3">
+                      <div className="flex items-center justify-between gap-2">
                         <span className={`status-pill ${getStatusClasses(contrato)}`}>
                           {getStatusLabel(contrato)}
                         </span>
                         <span
-                          className={`text-sm font-semibold ${getCriticidadeTextClass(contrato.criticidade)}`}
+                          className={`tnum text-xs font-semibold ${getCriticidadeTextClass(contrato.criticidade)}`}
                         >
                           {formatPrazoCompacto(contrato.diasParaVencimento)}
                         </span>
                       </div>
 
-                      <h3 className="line-clamp-2 text-md font-semibold leading-snug text-text">
+                      <h3 className="line-clamp-2 text-sm font-semibold leading-snug text-text">
                         {textoOuNaoInformado(contrato.objeto)}
                       </h3>
 
-                      <p className="line-clamp-1 text-sm text-text-muted">
+                      <p className="line-clamp-1 text-xs text-text-muted">
                         {textoOuNaoInformado(contrato.empresaContratada)}
                       </p>
 
-                      <div className="flex items-end justify-between gap-3 border-t border-border-divider pt-2">
-                        <div className="min-w-0">
-                          <p className="line-clamp-1 text-xs text-text-subtle">
-                            Nº {textoOuNaoInformado(contrato.contrato)}
-                          </p>
-                          <p className="line-clamp-1 text-xs text-text-subtle">
-                            Venc. {formatDataOuTraco(contrato.dataVencimento)}
-                          </p>
-                        </div>
-
-                        <p className="tnum text-md font-semibold text-text">
+                      <div className="mt-0.5 flex items-center justify-between gap-3">
+                        <span className="tnum text-[11px] text-text-subtle">
+                          {formatDataOuTraco(contrato.dataVencimento)}
+                        </span>
+                        <span className="tnum text-sm font-semibold text-text">
                           {formatMoedaBRL(contrato.valor)}
-                        </p>
+                        </span>
                       </div>
                     </article>
                   ))}
