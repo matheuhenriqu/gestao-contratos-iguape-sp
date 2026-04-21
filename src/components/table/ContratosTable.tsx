@@ -237,32 +237,22 @@ export function ContratosTable({
 
   return (
     <section className="hidden md:block">
-      <div className="mb-3 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border bg-surface px-4 py-3 shadow-soft md:px-5">
-        <div className="grid gap-0.5">
-          <p className="section-kicker">Por modalidade</p>
-          <p className="text-sm text-text-muted">
-            Cada modalidade é apresentada como um bloco independente. Clique no cabeçalho para expandir ou recolher.
-          </p>
-        </div>
+      <div className="mb-3 flex flex-wrap items-center justify-end gap-2 rounded-xl border border-border bg-surface px-4 py-2.5 shadow-soft md:px-5">
+        {groups.length > 0 ? (
+          <span className="tnum mr-auto text-xs font-medium text-text-muted">
+            {formatNumeroInteiro(groups.length)} modalidade{groups.length === 1 ? '' : 's'}
+          </span>
+        ) : null}
 
-        <div className="flex items-center gap-2">
-          {groups.length > 0 ? (
-            <span className="tnum inline-flex items-center gap-1.5 rounded-pill border border-border bg-surface-2/60 px-3 py-1.5 text-xs font-medium text-text-muted">
-              <span aria-hidden="true" className="inline-block h-1.5 w-1.5 rounded-pill bg-primary-600" />
-              {formatNumeroInteiro(groups.length)} modalidade{groups.length === 1 ? '' : 's'} nesta página
-            </span>
-          ) : null}
-
-          {groups.length > 1 ? (
-            <button type="button" onClick={toggleAll} className="button-secondary shrink-0">
-              {allCollapsed ? 'Expandir todas' : 'Recolher todas'}
-            </button>
-          ) : null}
-
-          <button type="button" onClick={onToggleCompactMode} className="button-secondary shrink-0">
-            {compactMode ? 'Modo confortável' : 'Modo compacto'}
+        {groups.length > 1 ? (
+          <button type="button" onClick={toggleAll} className="button-secondary shrink-0">
+            {allCollapsed ? 'Expandir todas' : 'Recolher todas'}
           </button>
-        </div>
+        ) : null}
+
+        <button type="button" onClick={onToggleCompactMode} className="button-secondary shrink-0">
+          {compactMode ? 'Confortável' : 'Compacto'}
+        </button>
       </div>
 
       {groups.length > 1 ? (
@@ -270,9 +260,6 @@ export function ContratosTable({
           aria-label="Índice de modalidades"
           className="mb-4 flex items-center gap-2 overflow-x-auto rounded-xl border border-border-divider bg-surface-2/40 px-3 py-2"
         >
-          <span className="shrink-0 pr-1 text-[11px] font-semibold uppercase tracking-[0.1em] text-text-subtle">
-            Ir para
-          </span>
           {groups.map((group) => (
             <a
               key={group.key}

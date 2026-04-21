@@ -77,32 +77,19 @@ function buildActiveKpi(
 function EmptyState({
   icon,
   title,
-  subtitle,
   action,
 }: {
   icon: ReactNode;
   title: string;
-  subtitle: string;
   action?: React.ReactNode;
 }) {
   return (
-    <div className="grid place-items-center rounded-xl border border-border-divider bg-surface px-4 py-20 text-center shadow-soft">
-      <div className="grid max-w-md gap-4">
-        <div className="relative mx-auto flex h-16 w-16 items-center justify-center">
-          <span
-            aria-hidden="true"
-            className="absolute inset-0 rounded-pill bg-primary-100 opacity-60"
-          />
-          <span
-            aria-hidden="true"
-            className="absolute inset-2 rounded-pill bg-primary-50"
-          />
-          <div className="relative flex h-10 w-10 items-center justify-center rounded-pill bg-surface text-primary-700 shadow-soft ring-1 ring-primary-200">
-            {icon}
-          </div>
+    <div className="grid place-items-center rounded-xl border border-border-divider bg-surface px-4 py-14 text-center shadow-soft">
+      <div className="grid gap-3">
+        <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-pill bg-primary-50 text-primary-700">
+          {icon}
         </div>
-        <h3 className="text-xl font-semibold tracking-tight text-text">{title}</h3>
-        <p className="text-base text-text-muted">{subtitle}</p>
+        <h3 className="text-lg font-semibold tracking-tight text-text">{title}</h3>
         {action ? <div className="pt-1">{action}</div> : null}
       </div>
     </div>
@@ -262,9 +249,8 @@ function App() {
         ) : contratos.length === 0 ? (
           <section className="grid gap-4">
             <EmptyState
-              icon={<DatabaseIcon className="h-6 w-6" />}
+              icon={<DatabaseIcon className="h-5 w-5" />}
               title="Nenhum contrato cadastrado"
-              subtitle="A base oficial não retornou registros utilizáveis para exibição."
             />
           </section>
         ) : (
@@ -297,9 +283,8 @@ function App() {
 
               {totalResultados === 0 && totalResultadosVencidos === 0 ? (
                 <EmptyState
-                  icon={<SearchIcon className="h-6 w-6" />}
+                  icon={<SearchIcon className="h-5 w-5" />}
                   title="Nenhum contrato encontrado"
-                  subtitle="Tente ajustar os filtros para ampliar ou refinar a consulta."
                   action={
                     <button type="button" onClick={limparFiltros} className="button-primary">
                       Limpar filtros
@@ -307,20 +292,17 @@ function App() {
                   }
                 />
               ) : totalResultados === 0 ? (
-                <div className="rounded-xl border border-border-divider bg-surface px-5 py-6 text-center shadow-soft">
-                  <p className="text-sm text-text-muted">
-                    Nenhum contrato vigente neste recorte.{' '}
-                    <button
-                      type="button"
-                      onClick={scrollToVencidos}
-                      className="font-medium text-primary-700 underline-offset-2 hover:underline"
-                    >
+                <EmptyState
+                  icon={<SearchIcon className="h-5 w-5" />}
+                  title="Nenhum contrato vigente"
+                  action={
+                    <button type="button" onClick={scrollToVencidos} className="button-secondary">
                       {totalResultadosVencidos === 1
-                        ? 'Ver 1 contrato vencido ↓'
-                        : `Ver ${formatNumeroInteiro(totalResultadosVencidos)} contratos vencidos ↓`}
+                        ? 'Ver 1 contrato vencido'
+                        : `Ver ${formatNumeroInteiro(totalResultadosVencidos)} contratos vencidos`}
                     </button>
-                  </p>
-                </div>
+                  }
+                />
               ) : (
                 <>
                   <ContratosTable
@@ -403,10 +385,7 @@ function App() {
             ) : null}
 
             <section className="grid gap-4">
-              <SectionHeader
-                title="Análise visual"
-                description="Clique nos gráficos para filtrar automaticamente."
-              />
+              <SectionHeader title="Análise visual" />
 
               <Suspense fallback={chartsLoadingFallback}>
                 <LazyChartsSection
