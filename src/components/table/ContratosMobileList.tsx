@@ -15,24 +15,18 @@ import {
   getStatusClasses,
   getStatusLabel,
 } from '../shared/contratoAppearance';
-import { Pagination } from '../shared/Pagination';
 import { ChevronDownIcon } from '../shared/icons';
 import { groupContratosByModalidade } from '../shared/groupContratosByModalidade';
 
 type ContratosMobileListProps = {
   contratos: Contrato[];
   totalResultados: number;
-  paginaAtual: number;
-  totalPaginas: number;
-  itensPorPagina: number;
   ordenacao: {
     campo: OrdenacaoCampo;
     direcao: OrdenacaoDirecao;
   };
   onSortChange: (campo: OrdenacaoCampo, direcao: OrdenacaoDirecao) => void;
   onOpenDetail: (contrato: Contrato) => void;
-  onPageChange: (page: number) => void;
-  onPageSizeChange: (value: number) => void;
 };
 
 const SORT_OPTIONS: Array<{ value: `${OrdenacaoCampo}:${OrdenacaoDirecao}`; label: string }> = [
@@ -46,14 +40,9 @@ const SORT_OPTIONS: Array<{ value: `${OrdenacaoCampo}:${OrdenacaoDirecao}`; labe
 export function ContratosMobileList({
   contratos,
   totalResultados,
-  paginaAtual,
-  totalPaginas,
-  itensPorPagina,
   ordenacao,
   onSortChange,
   onOpenDetail,
-  onPageChange,
-  onPageSizeChange,
 }: ContratosMobileListProps) {
   const groups = groupContratosByModalidade(contratos);
   const groupKeys = useMemo(() => groups.map((group) => group.key).join('|'), [groups]);
@@ -82,38 +71,24 @@ export function ContratosMobileList({
           {formatNumeroInteiro(totalResultados)} contrato{totalResultados === 1 ? '' : 's'}
         </p>
 
-        <div className="flex items-center gap-2">
-          <select
-            aria-label="Ordenar"
-            value={`${ordenacao.campo}:${ordenacao.direcao}`}
-            onChange={(event) => {
-              const [campo, direcao] = event.target.value.split(':') as [
-                OrdenacaoCampo,
-                OrdenacaoDirecao,
-              ];
-              onSortChange(campo, direcao);
-            }}
-            className="field-base min-h-10 min-w-[140px] text-sm"
-          >
-            {SORT_OPTIONS.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-          <select
-            aria-label="Por página"
-            value={itensPorPagina}
-            onChange={(event) => onPageSizeChange(Number(event.target.value))}
-            className="field-base min-h-10 w-[64px] text-sm"
-          >
-            {[25, 50, 100].map((value) => (
-              <option key={value} value={value}>
-                {value}
-              </option>
-            ))}
-          </select>
-        </div>
+        <select
+          aria-label="Ordenar"
+          value={`${ordenacao.campo}:${ordenacao.direcao}`}
+          onChange={(event) => {
+            const [campo, direcao] = event.target.value.split(':') as [
+              OrdenacaoCampo,
+              OrdenacaoDirecao,
+            ];
+            onSortChange(campo, direcao);
+          }}
+          className="field-base min-h-10 min-w-[140px] text-sm"
+        >
+          {SORT_OPTIONS.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
       </div>
 
       <div className="grid gap-3">
@@ -239,14 +214,6 @@ export function ContratosMobileList({
         })}
       </div>
 
-      <div className="surface-card flex justify-center p-3">
-        <Pagination
-          currentPage={paginaAtual}
-          totalPages={totalPaginas}
-          onPageChange={onPageChange}
-          compact
-        />
-      </div>
     </section>
   );
 }
