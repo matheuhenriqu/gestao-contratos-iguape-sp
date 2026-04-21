@@ -1,6 +1,6 @@
-# Gestão de Contratos — Prefeitura de Iguape/SP
+# Gestão de Contratos — Prefeitura Municipal
 
-Painel web estático para consulta, acompanhamento e priorização dos contratos da Prefeitura de Iguape/SP, com foco em leitura administrativa, filtros combináveis, indicadores executivos, análise por vencimento e visualização responsiva para desktop e iPhone.
+Painel web estático para consulta, acompanhamento e priorização dos contratos da prefeitura, com foco em leitura administrativa, filtros combináveis, indicadores executivos, análise por vencimento e visualização responsiva para desktop e iPhone.
 
 ## Stack
 
@@ -47,4 +47,4 @@ npm run build
 
 ## Acesso público
 
-- Aplicação publicada: https://matheuhenriqu.github.io/gestao-contratos-iguape-sp/
+- Aplicação publicada: https://matheuhenriqu.github.io/gestao-contratos-sp/
